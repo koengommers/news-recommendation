@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 from torch.utils.data import Dataset
@@ -40,8 +41,8 @@ def load_news(path):
         [
             pd.read_table(
                 os.path.join(path, split, "news.tsv"),
-                usecols=[0, 2, 3],
-                names=["id", "category", "title"],
+                usecols=[0, 2],
+                names=["id", "category"],
             )
             for split in splits
         ]
@@ -52,8 +53,16 @@ def load_news(path):
     return news
 
 
+def make_context(group, context_size):
+    users = list(group.user)
+    contexts = [
+        users[i : i + context_size] for i in range(len(users) - context_size + 1)
+    ]
+    return pd.DataFrame({"contexts": contexts, "category": group.name})
+
+
 class TopicReadsDataset(Dataset):
-    def __init__(self, variant="small", dataset_dir="./data"):
+    def __init__(self, variant="small", dataset_dir="./data", context_size=1):
         path = os.path.join(dataset_dir, f"mind_{variant}")
         if not os.path.exists(path):
             download_mind(variant, dataset_dir)
@@ -67,15 +76,20 @@ class TopicReadsDataset(Dataset):
 
         reads = users.explode("history").dropna()
         reads = pd.merge(reads, news, left_on="history", right_index=True)
+        reads = reads.drop(columns=["history"])
         reads = reads.reset_index()
+        reads = reads.groupby("category").apply(lambda x: make_context(x, context_size))
+        reads = reads.reset_index(drop=True)
+
         self.topic_encoder = preprocessing.OrdinalEncoder()
-        self.contexts = self.topic_encoder.fit_transform(
+        self.topics = self.topic_encoder.fit_transform(
             reads["category"].values.reshape(-1, 1)
         )
+
+        context_items = np.stack(reads["contexts"].values).reshape(-1, 1)
         self.user_encoder = preprocessing.OrdinalEncoder()
-        self.targets = self.user_encoder.fit_transform(
-            reads["user"].values.reshape(-1, 1)
-        )
+        encoded_context_items = self.user_encoder.fit_transform(context_items)
+        self.contexts = encoded_context_items.reshape(-1, context_size)
 
     @property
     def number_of_topics(self):
@@ -89,4 +103,4 @@ class TopicReadsDataset(Dataset):
         return len(self.contexts)
 
     def __getitem__(self, idx):
-        return self.contexts[idx], self.targets[idx]
+        return self.topics[idx], self.contexts[idx]
