@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from datasets.topic_reads import TopicReadsDataset
+from evaluate_embeddings import evaluate_embeddings
 from models.skipgram import Skipgram
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -20,7 +21,7 @@ def main(
     learning_rate: float = 0.001,
 ):
     dataset = TopicReadsDataset(variant=mind_variant, context_size=context_size)
-    dataloader = DataLoader(dataset, batch_size=batch_size)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
     model = Skipgram(
         dataset.number_of_topics,
@@ -40,13 +41,18 @@ def main(
             targets = targets.to(torch.long).to(device)
             model.zero_grad()
             probs = model(topic.squeeze(1))
-            loss = loss_function(probs, targets.squeeze(1))
+            loss = loss_function(probs, targets)
             total_train_loss += loss.item()
             loss.backward()
             optimizer.step()
 
+        embeddings = next(model.embeddings.parameters()).cpu().data.numpy()
+        metrics = evaluate_embeddings(dataset.topic_encoder, embeddings)
+
         average_train_loss = total_train_loss / len(dataloader)
-        print(f"Epochs: {epoch_num + 1} | Train loss: {average_train_loss}")
+        print(
+            f"Epochs: {epoch_num + 1} | Train loss: {average_train_loss} | P@1: {metrics['P@1']} | P@5: {metrics['P@5']} | MRR: {metrics['MRR']:.5f}"
+        )
 
 
 if __name__ == "__main__":
