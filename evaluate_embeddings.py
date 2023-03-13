@@ -57,3 +57,19 @@ def evaluate_embeddings(topic_encoder, embeddings):
         "P@5": top_k_accuracy_score(y_true, y_scores, k=5, labels=labels),
         "MRR": mrr(y_true, y_scores),
     }
+
+
+def find_closest_embedding(embeddings, topic_encoder, topic, n=5):
+    def encode(topic):
+        return int(topic_encoder.transform([[topic]])[0][0])
+
+    def embed(topic):
+        encoded = encode(topic)
+        return embeddings[encoded]
+    
+    target = embed(topic)
+    cosine_similarities = cosine_similarity(target.reshape(1, -1), embeddings)[0]
+    sorted = np.flip(np.argsort(cosine_similarities))
+    return list(topic_encoder.inverse_transform(sorted[1:1+n].reshape(-1, 1)).reshape(-1))
+
+
