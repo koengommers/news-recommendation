@@ -1,4 +1,5 @@
 import os
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -63,33 +64,57 @@ def make_context(group, context_size):
 
 class TopicReadsDataset(Dataset):
     def __init__(self, variant="small", dataset_dir="./data", context_size=1):
-        path = os.path.join(dataset_dir, f"mind_{variant}")
-        if not os.path.exists(path):
-            download_mind(variant, dataset_dir)
-
-        print("Loading behaviors...")
-        behaviors = load_behaviors(path)
-        print("Processing users...")
-        users = convert_behaviors_to_users(behaviors)
-
-        news = load_news(path)
-
-        reads = users.explode("history").dropna()
-        reads = pd.merge(reads, news, left_on="history", right_index=True)
-        reads = reads.drop(columns=["history"])
-        reads = reads.reset_index()
-        reads = reads.groupby("category").apply(lambda x: make_context(x, context_size))
-        reads = reads.reset_index(drop=True)
-
-        self.topic_encoder = preprocessing.OrdinalEncoder()
-        self.topics = self.topic_encoder.fit_transform(
-            reads["category"].values.reshape(-1, 1)
+        prepared_dir = os.path.join(dataset_dir, "prepared")
+        prepared_path = os.path.join(
+            prepared_dir,
+            f"mind_{variant}_topic_reads_cs{context_size}.pickle",
         )
+        if os.path.exists(prepared_path):
+            with open(prepared_path, "rb") as f:
+                (
+                    self.topic_encoder,
+                    self.topics,
+                    self.user_encoder,
+                    self.contexts,
+                ) = pickle.load(f)
+        else:
+            os.makedirs(prepared_dir, exist_ok=True)
 
-        context_items = np.stack(reads["contexts"].values).reshape(-1, 1)
-        self.user_encoder = preprocessing.OrdinalEncoder()
-        encoded_context_items = self.user_encoder.fit_transform(context_items)
-        self.contexts = encoded_context_items.reshape(-1, context_size)
+            path = os.path.join(dataset_dir, f"mind_{variant}")
+            if not os.path.exists(path):
+                download_mind(variant, dataset_dir)
+
+            print("Loading behaviors...")
+            behaviors = load_behaviors(path)
+            print("Processing users...")
+            users = convert_behaviors_to_users(behaviors)
+
+            news = load_news(path)
+
+            reads = users.explode("history").dropna()
+            reads = pd.merge(reads, news, left_on="history", right_index=True)
+            reads = reads.drop(columns=["history"])
+            reads = reads.reset_index()
+            reads = reads.groupby("category").apply(
+                lambda x: make_context(x, context_size)
+            )
+            reads = reads.reset_index(drop=True)
+
+            self.topic_encoder = preprocessing.OrdinalEncoder()
+            self.topics = self.topic_encoder.fit_transform(
+                reads["category"].values.reshape(-1, 1)
+            )
+
+            context_items = np.stack(reads["contexts"].values).reshape(-1, 1)
+            self.user_encoder = preprocessing.OrdinalEncoder()
+            encoded_context_items = self.user_encoder.fit_transform(context_items)
+            self.contexts = encoded_context_items.reshape(-1, context_size)
+
+            with open(prepared_path, "wb") as f:
+                pickle.dump(
+                    (self.topic_encoder, self.topics, self.user_encoder, self.contexts),
+                    f,
+                )
 
     @property
     def number_of_topics(self):
