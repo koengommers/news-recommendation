@@ -1,22 +1,24 @@
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 class Skipgram(nn.Module):
     def __init__(
-        self, n_topics, n_users, embedding_dim=100, hidden_layer_dim=128, context_size=1
+        self, n_topics, n_users, embedding_dim=100
     ):
         super(Skipgram, self).__init__()
-        self.embeddings = nn.Embedding(n_topics, embedding_dim)
-        self.hidden_layer = nn.Linear(embedding_dim, hidden_layer_dim)
-        self.output_layer = nn.Linear(hidden_layer_dim, context_size * n_users)
-        self.context_size = context_size
+        self.target_embeddings = nn.Embedding(n_topics, embedding_dim)
+        self.context_embeddings = nn.Embedding(n_users, embedding_dim)
 
-    def forward(self, x):
-        batch_size = x.size(0)
+    def forward(self, target, context):
+        target_embedding = self.target_embeddings(target)
+        batch_size, embedding_dim = target_embedding.size()
+        target_embedding = target_embedding.view(batch_size, 1, embedding_dim)
 
-        embedding = self.embeddings(x)
-        hidden = F.relu(self.hidden_layer(embedding))
-        out = self.output_layer(hidden)
-        probs = F.log_softmax(out, dim=1)
-        return probs.view(batch_size, -1, self.context_size)
+        context_embedding = self.context_embeddings(context)
+        context_embedding = context_embedding.transpose(1, 2)
+
+        context_size = context.size(1)
+        dots = target_embedding.bmm(context_embedding)
+        dots = dots.view(batch_size, context_size)
+
+        return dots

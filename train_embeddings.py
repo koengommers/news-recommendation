@@ -16,7 +16,6 @@ def main(
     context_size: int = 1,
     mind_variant: str = "small",
     embedding_dim: int = 100,
-    hidden_layer_dim: int = 128,
     batch_size: int = 128,
     learning_rate: float = 0.001,
 ):
@@ -27,13 +26,11 @@ def main(
         dataset.number_of_topics,
         dataset.number_of_users,
         embedding_dim,
-        hidden_layer_dim,
-        context_size,
     ).to(device)
-    loss_function = nn.NLLLoss()
+    loss_function = nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), learning_rate)
 
-    embeddings = next(model.embeddings.parameters()).cpu().data.numpy()
+    embeddings = next(model.target_embeddings.parameters()).cpu().data.numpy()
     tqdm.write("== Closest topics ==")
     for topic in [
         "movienews",
@@ -50,17 +47,17 @@ def main(
     for epoch_num in tqdm(range(epochs)):
         total_train_loss = 0
 
-        for topic, targets in tqdm(dataloader):
-            topic = topic.to(torch.long).to(device)
-            targets = targets.to(torch.long).to(device)
+        for target, context in tqdm(dataloader):
+            target = target.to(torch.long).to(device)
+            context = context.to(torch.long).to(device)
             model.zero_grad()
-            probs = model(topic.squeeze(1))
-            loss = loss_function(probs, targets)
+            probs = model(target.squeeze(1), context)
+            loss = loss_function(probs.squeeze(1), torch.ones(probs.size(0)).to(device))
             total_train_loss += loss.item()
             loss.backward()
             optimizer.step()
 
-        embeddings = next(model.embeddings.parameters()).cpu().data.numpy()
+        embeddings = next(model.target_embeddings.parameters()).cpu().data.numpy()
         metrics = evaluate_embeddings(dataset.topic_encoder, embeddings)
 
         average_train_loss = total_train_loss / len(dataloader)
