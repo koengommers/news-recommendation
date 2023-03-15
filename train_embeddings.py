@@ -13,14 +13,13 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def main(
     epochs: int = 5,
-    context_size: int = 1,
     mind_variant: str = "small",
     embedding_dim: int = 100,
     batch_size: int = 128,
     learning_rate: float = 0.001,
     n_negative_samples: int = 4,
 ):
-    dataset = TopicReadsDataset(variant=mind_variant, context_size=context_size)
+    dataset = TopicReadsDataset(variant=mind_variant)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
     model = Skipgram(

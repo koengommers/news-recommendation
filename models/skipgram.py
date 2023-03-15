@@ -17,8 +17,8 @@ class Skipgram(nn.Module):
         context_embedding = self.context_embeddings(context)
         context_embedding = context_embedding.transpose(1, 2)
 
-        context_size = context.size(1)
+        sample_size = context.size(1)
         dots = target_embedding.bmm(context_embedding)
-        dots = dots.view(batch_size, context_size)
+        dots = dots.view(batch_size, sample_size)
 
         return dots

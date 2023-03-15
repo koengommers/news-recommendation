@@ -54,20 +54,12 @@ def load_news(path):
     return news
 
 
-def make_context(group, context_size):
-    users = list(group.user)
-    contexts = [
-        users[i : i + context_size] for i in range(len(users) - context_size + 1)
-    ]
-    return pd.DataFrame({"contexts": contexts, "category": group.name})
-
-
 class TopicReadsDataset(Dataset):
-    def __init__(self, variant="small", dataset_dir="./data", context_size=1):
+    def __init__(self, variant="small", dataset_dir="./data"):
         prepared_dir = os.path.join(dataset_dir, "prepared")
         prepared_path = os.path.join(
             prepared_dir,
-            f"mind_{variant}_topic_reads_cs{context_size}.pickle",
+            f"mind_{variant}_topic_reads.pickle",
         )
         if os.path.exists(prepared_path):
             with open(prepared_path, "rb") as f:
@@ -95,20 +87,16 @@ class TopicReadsDataset(Dataset):
             reads = pd.merge(reads, news, left_on="history", right_index=True)
             reads = reads.drop(columns=["history"])
             reads = reads.reset_index()
-            reads = reads.groupby("category").apply(
-                lambda x: make_context(x, context_size)
-            )
-            reads = reads.reset_index(drop=True)
 
             self.topic_encoder = preprocessing.OrdinalEncoder()
             self.topics = self.topic_encoder.fit_transform(
                 reads["category"].values.reshape(-1, 1)
             )
 
-            context_items = np.stack(reads["contexts"].values).reshape(-1, 1)
             self.user_encoder = preprocessing.OrdinalEncoder()
-            encoded_context_items = self.user_encoder.fit_transform(context_items)
-            self.contexts = encoded_context_items.reshape(-1, context_size)
+            self.contexts = self.user_encoder.fit_transform(
+                reads["user"].values.reshape(-1, 1)
+            )
 
             with open(prepared_path, "wb") as f:
                 pickle.dump(
