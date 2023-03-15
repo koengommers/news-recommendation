@@ -18,6 +18,7 @@ def main(
     embedding_dim: int = 100,
     batch_size: int = 128,
     learning_rate: float = 0.001,
+    n_negative_samples: int = 4,
 ):
     dataset = TopicReadsDataset(variant=mind_variant, context_size=context_size)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
@@ -47,12 +48,21 @@ def main(
     for epoch_num in tqdm(range(epochs)):
         total_train_loss = 0
 
-        for target, context in tqdm(dataloader):
+        for target, context_positive in tqdm(dataloader):
+            batch_size = target.size(0)
+
             target = target.to(torch.long).to(device)
-            context = context.to(torch.long).to(device)
+            context_positive = context_positive.to(torch.long)
+            context_negative = torch.randint(dataset.number_of_users, (batch_size, n_negative_samples))
+            context = torch.cat([context_positive, context_negative], dim=1).to(device)
+
+            y_pos = torch.ones(batch_size, 1)
+            y_neg = torch.zeros(batch_size, n_negative_samples)
+            y = torch.cat([y_pos, y_neg], dim=1).to(device)
+
             model.zero_grad()
             probs = model(target.squeeze(1), context)
-            loss = loss_function(probs.squeeze(1), torch.ones(probs.size(0)).to(device))
+            loss = loss_function(probs, y)
             total_train_loss += loss.item()
             loss.backward()
             optimizer.step()
