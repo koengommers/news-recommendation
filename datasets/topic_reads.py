@@ -1,7 +1,6 @@
 import os
 import pickle
 
-import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 from torch.utils.data import Dataset
@@ -72,6 +71,7 @@ class TopicReadsDataset(Dataset):
         else:
             os.makedirs(prepared_dir, exist_ok=True)
 
+            # Download MIND if it is not downloaded yet
             path = os.path.join(dataset_dir, f"mind_{variant}")
             if not os.path.exists(path):
                 download_mind(variant, dataset_dir)
@@ -88,16 +88,19 @@ class TopicReadsDataset(Dataset):
             reads = reads.drop(columns=["history"])
             reads = reads.reset_index()
 
+            # Topic name to ordinal number
             self.topic_encoder = preprocessing.OrdinalEncoder()
             self.topics = self.topic_encoder.fit_transform(
                 reads["category"].values.reshape(-1, 1)
             )
 
+            # User ID to ordinal number
             self.user_encoder = preprocessing.OrdinalEncoder()
             self.contexts = self.user_encoder.fit_transform(
                 reads["user"].values.reshape(-1, 1)
             )
 
+            # Save preprocessed data
             with open(prepared_path, "wb") as f:
                 pickle.dump(
                     (self.topic_encoder, self.topics, self.user_encoder, self.contexts),
