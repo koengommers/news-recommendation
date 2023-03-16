@@ -41,8 +41,8 @@ def load_news(path):
         [
             pd.read_table(
                 os.path.join(path, split, "news.tsv"),
-                usecols=[0, 2],
-                names=["id", "category"],
+                usecols=[0, 1, 2],
+                names=["id", "category", "subcategory"],
             )
             for split in splits
         ]
@@ -51,6 +51,14 @@ def load_news(path):
     assert news is not None
     news = news.set_index("id")
     return news
+
+
+def news_to_topics(news):
+    categories = news[['category', 'subcategory']]
+    categories = categories.drop_duplicates()
+    assert categories is not None
+    categories = categories.reset_index(drop=True)
+    return categories
 
 
 class TopicReadsDataset(Dataset):
@@ -67,6 +75,7 @@ class TopicReadsDataset(Dataset):
                     self.topics,
                     self.user_encoder,
                     self.contexts,
+                    self.all_topics,
                 ) = pickle.load(f)
         else:
             os.makedirs(prepared_dir, exist_ok=True)
@@ -82,6 +91,7 @@ class TopicReadsDataset(Dataset):
             users = convert_behaviors_to_users(behaviors)
 
             news = load_news(path)
+            self.all_topics = news_to_topics(news)
 
             reads = users.explode("history").dropna()
             reads = pd.merge(reads, news, left_on="history", right_index=True)
@@ -91,7 +101,7 @@ class TopicReadsDataset(Dataset):
             # Topic name to ordinal number
             self.topic_encoder = preprocessing.OrdinalEncoder()
             self.topics = self.topic_encoder.fit_transform(
-                reads["category"].values.reshape(-1, 1)
+                reads["subcategory"].values.reshape(-1, 1)
             )
 
             # User ID to ordinal number
@@ -103,7 +113,7 @@ class TopicReadsDataset(Dataset):
             # Save preprocessed data
             with open(prepared_path, "wb") as f:
                 pickle.dump(
-                    (self.topic_encoder, self.topics, self.user_encoder, self.contexts),
+                    (self.topic_encoder, self.topics, self.user_encoder, self.contexts, self.all_topics),
                     f,
                 )
 

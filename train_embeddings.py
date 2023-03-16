@@ -32,13 +32,24 @@ def main(
     optimizer = torch.optim.Adam(model.parameters(), learning_rate)
 
     embeddings = next(model.target_embeddings.parameters()).cpu().data.numpy()
-    print_closest_topics(embeddings, dataset.topic_encoder, [
-        "movienews",
-        "baseball",
-        "financenews",
-        "newsscience",
-        "newsworld",
-    ])
+    metrics = evaluate_embeddings(embeddings, dataset)
+    metrics_string = " | ".join(
+        [f"{key}: {value:.5f}" for key, value in metrics.items()]
+    )
+    tqdm.write(
+        f"Epochs: 0 | {metrics_string}"
+    )
+    print_closest_topics(
+        embeddings,
+        dataset.topic_encoder,
+        [
+            "movienews",
+            "baseball",
+            "financenews",
+            "newsscience",
+            "newsworld",
+        ],
+    )
 
     for epoch_num in tqdm(range(epochs)):
         total_train_loss = 0
@@ -48,7 +59,9 @@ def main(
 
             target = target.to(torch.long).to(device)
             context_positive = context_positive.to(torch.long)
-            context_negative = torch.randint(dataset.number_of_users, (batch_size, n_negative_samples))
+            context_negative = torch.randint(
+                dataset.number_of_users, (batch_size, n_negative_samples)
+            )
             context = torch.cat([context_positive, context_negative], dim=1).to(device)
 
             y_pos = torch.ones(batch_size, 1)
@@ -63,19 +76,26 @@ def main(
             optimizer.step()
 
         embeddings = next(model.target_embeddings.parameters()).cpu().data.numpy()
-        metrics = evaluate_embeddings(dataset.topic_encoder, embeddings)
-
-        average_train_loss = total_train_loss / len(dataloader)
-        tqdm.write(
-            f"Epochs: {epoch_num + 1} | Train loss: {average_train_loss} | P@1: {metrics['P@1']} | P@5: {metrics['P@5']} | MRR: {metrics['MRR']:.5f}"
+        metrics = evaluate_embeddings(embeddings, dataset)
+        metrics["Train loss"] = total_train_loss / len(dataloader)
+        metrics_string = " | ".join(
+            [f"{key}: {value:.5f}" for key, value in metrics.items()]
         )
-        print_closest_topics(embeddings, dataset.topic_encoder, [
-            "movienews",
-            "baseball",
-            "financenews",
-            "newsscience",
-            "newsworld",
-        ])
+
+        tqdm.write(
+            f"Epochs: {epoch_num + 1} | {metrics_string}"
+        )
+        print_closest_topics(
+            embeddings,
+            dataset.topic_encoder,
+            [
+                "movienews",
+                "baseball",
+                "financenews",
+                "newsscience",
+                "newsworld",
+            ],
+        )
 
 
 if __name__ == "__main__":
