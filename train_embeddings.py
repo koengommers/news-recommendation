@@ -5,7 +5,8 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from datasets.topic_reads import TopicReadsDataset
-from evaluate_embeddings import evaluate_embeddings, find_closest_embedding
+from evaluation.embeddings import evaluate_embeddings
+from evaluation.utils import print_closest_topics
 from models.skipgram import Skipgram
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -31,18 +32,13 @@ def main(
     optimizer = torch.optim.Adam(model.parameters(), learning_rate)
 
     embeddings = next(model.target_embeddings.parameters()).cpu().data.numpy()
-    tqdm.write("== Closest topics ==")
-    for topic in [
+    print_closest_topics(embeddings, dataset.topic_encoder, [
         "movienews",
         "baseball",
         "financenews",
         "newsscience",
         "newsworld",
-    ]:
-        closest_topics = find_closest_embedding(
-            embeddings, dataset.topic_encoder, topic
-        )
-        print(f"{topic}: {', '.join(closest_topics)}")
+    ])
 
     for epoch_num in tqdm(range(epochs)):
         total_train_loss = 0
@@ -73,19 +69,13 @@ def main(
         tqdm.write(
             f"Epochs: {epoch_num + 1} | Train loss: {average_train_loss} | P@1: {metrics['P@1']} | P@5: {metrics['P@5']} | MRR: {metrics['MRR']:.5f}"
         )
-
-        tqdm.write("== Closest topics ==")
-        for topic in [
+        print_closest_topics(embeddings, dataset.topic_encoder, [
             "movienews",
             "baseball",
             "financenews",
             "newsscience",
             "newsworld",
-        ]:
-            closest_topics = find_closest_embedding(
-                embeddings, dataset.topic_encoder, topic
-            )
-            tqdm.write(f"{topic}: {', '.join(closest_topics)}")
+        ])
 
 
 if __name__ == "__main__":
