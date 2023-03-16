@@ -55,17 +55,17 @@ def main(
         total_train_loss = 0
 
         for target, context_positive in tqdm(dataloader):
-            batch_size = target.size(0)
+            current_batch_size = target.size(0)
 
             target = target.to(torch.long).to(device)
             context_positive = context_positive.to(torch.long)
             context_negative = torch.randint(
-                dataset.number_of_users, (batch_size, n_negative_samples)
+                dataset.number_of_users, (current_batch_size, n_negative_samples)
             )
             context = torch.cat([context_positive, context_negative], dim=1).to(device)
 
-            y_pos = torch.ones(batch_size, 1)
-            y_neg = torch.zeros(batch_size, n_negative_samples)
+            y_pos = torch.ones(current_batch_size, 1)
+            y_neg = torch.zeros(current_batch_size, n_negative_samples)
             y = torch.cat([y_pos, y_neg], dim=1).to(device)
 
             model.zero_grad()
