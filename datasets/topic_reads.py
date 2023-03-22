@@ -5,56 +5,12 @@ import pandas as pd
 from sklearn import preprocessing
 from torch.utils.data import Dataset
 
-from utils import download_mind
-
-splits = ["train", "dev"]
-
-
-def load_behaviors(path):
-    behaviors = pd.concat(
-        [
-            pd.read_table(
-                os.path.join(path, split, "behaviors.tsv"),
-                names=["impression_id", "user", "time", "clicked_news", "impressions"],
-            )
-            for split in splits
-        ],
-        ignore_index=True,
-    )
-    behaviors.clicked_news = behaviors.clicked_news.fillna("").str.split()
-    return behaviors
-
-
-def combine_history(histories):
-    return histories[histories.apply(len).idxmax()]
-
-
-def convert_behaviors_to_users(behaviors):
-    grouped = behaviors.groupby("user")
-    users = grouped.agg({"clicked_news": combine_history})
-    users = users.rename(columns={"clicked_news": "history"})
-    return users
-
-
-def load_news(path):
-    news = pd.concat(
-        [
-            pd.read_table(
-                os.path.join(path, split, "news.tsv"),
-                usecols=[0, 1, 2],
-                names=["id", "category", "subcategory"],
-            )
-            for split in splits
-        ]
-    )
-    news = news.drop_duplicates(subset="id")
-    assert news is not None
-    news = news.set_index("id")
-    return news
+from utils import (convert_behaviors_to_users, download_mind, load_behaviors,
+                   load_news)
 
 
 def news_to_topics(news):
-    categories = news[['category', 'subcategory']]
+    categories = news[["category", "subcategory"]]
     categories = categories.drop_duplicates()
     assert categories is not None
     categories = categories.reset_index(drop=True)
@@ -113,7 +69,13 @@ class TopicReadsDataset(Dataset):
             # Save preprocessed data
             with open(prepared_path, "wb") as f:
                 pickle.dump(
-                    (self.topic_encoder, self.topics, self.user_encoder, self.contexts, self.all_topics),
+                    (
+                        self.topic_encoder,
+                        self.topics,
+                        self.user_encoder,
+                        self.contexts,
+                        self.all_topics,
+                    ),
                     f,
                 )
 

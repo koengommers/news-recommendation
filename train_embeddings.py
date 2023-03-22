@@ -1,3 +1,5 @@
+import pickle
+
 import torch
 import torch.nn as nn
 import typer
@@ -96,6 +98,10 @@ def main(
                 "newsworld",
             ],
         )
+
+        # Save embeddings
+        with open("embeddings.pickle", "wb") as f:
+            pickle.dump((embeddings, dataset.topic_encoder), f)
 
 
 if __name__ == "__main__":
