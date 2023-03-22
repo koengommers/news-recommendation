@@ -1,12 +1,27 @@
 import os
-import pandas as pd
 import zipfile
 
+import pandas as pd
 import requests
 from tqdm import tqdm
 
+SPLITS = {
+    "small": ["train", "dev"],
+    "large": ["train", "dev", "test"],
+}
 
-splits = ["train", "dev"]
+
+def _get_mind_path(variant, split=None, dataset_dir="./data"):
+    path = os.path.join(dataset_dir, f"mind_{variant}")
+
+    if split:
+        path = os.path.join(path, split)
+
+    return path
+
+
+def _get_mind_file(variant, split, filename, dataset_dir="./data"):
+    return os.path.join(_get_mind_path(variant, split, dataset_dir), filename)
 
 
 def download_mind(variant="small", dataset_dir="./data"):
@@ -14,13 +29,9 @@ def download_mind(variant="small", dataset_dir="./data"):
 
     os.makedirs(dataset_dir, exist_ok=True)
 
-    splits = {
-        "small": ["train", "dev"],
-        "large": ["train", "dev", "test"],
-    }
-    assert variant in splits.keys()
+    assert variant in SPLITS.keys()
 
-    for split in splits[variant]:
+    for split in SPLITS[variant]:
         filename = f"MIND{variant}_{split}.zip"
         filepath = os.path.join(dataset_dir, filename)
         response = requests.get(f"{BASE_URL}/{filename}", stream=True)
@@ -38,48 +49,72 @@ def download_mind(variant="small", dataset_dir="./data"):
                     file.write(data)
 
         with zipfile.ZipFile(filepath) as zip:
-            zip.extractall(os.path.join(dataset_dir, f"mind_{variant}", split))
+            zip.extractall(_get_mind_path(variant, split, dataset_dir))
 
         os.remove(filepath)
 
-def load_behaviors(path):
-    behaviors = pd.concat(
+
+def _load_mind_data(filename, variant, splits, column_names, column_indices):
+    return pd.concat(
         [
             pd.read_table(
-                os.path.join(path, split, "behaviors.tsv"),
-                names=["impression_id", "user", "time", "clicked_news", "impressions"],
+                _get_mind_file(variant, split, filename),
+                names=column_names,
+                usecols=column_indices,
             )
             for split in splits
         ],
         ignore_index=True,
     )
+
+
+def load_behaviors(variant="small", splits=None, columns=None):
+    if splits is None:
+        splits = SPLITS[variant]
+
+    column_names = ["impression_id", "user", "time", "clicked_news", "impressions"]
+    if columns is None:
+        columns = column_names
+    column_indices = [column_names.index(col) for col in columns]
+
+    behaviors = _load_mind_data(
+        "behaviors.tsv", variant, splits, columns, column_indices
+    )
     behaviors.clicked_news = behaviors.clicked_news.fillna("").str.split()
     return behaviors
 
 
-def combine_history(histories):
+def load_news(variant="small", splits=None, columns=None):
+    if splits is None:
+        splits = SPLITS[variant]
+
+    column_names = [
+        "id",
+        "category",
+        "subcategory",
+        "title",
+        "abstract",
+        "url",
+        "title_entities",
+        "abstract_entities",
+    ]
+    if columns is None:
+        columns = column_names
+    column_indices = [column_names.index(col) for col in columns]
+
+    news = _load_mind_data("news.tsv", variant, splits, columns, column_indices)
+    news = news.drop_duplicates(subset="id")
+    assert news is not None
+    news = news.set_index("id")
+    return news
+
+
+def _combine_history(histories):
     return histories[histories.apply(len).idxmax()]
 
 
 def convert_behaviors_to_users(behaviors):
     grouped = behaviors.groupby("user")
-    users = grouped.agg({"clicked_news": combine_history})
+    users = grouped.agg({"clicked_news": _combine_history})
     users = users.rename(columns={"clicked_news": "history"})
     return users
-
-
-def load_news(path):
-    news = pd.concat(
-        [
-            pd.read_table(
-                os.path.join(path, split, "news.tsv"),
-                usecols=[0, 1, 2],
-                names=["id", "category", "subcategory"],
-            )
-            for split in splits
-        ]
-    )
-    news = news.drop_duplicates(subset="id")
-    assert news is not None
-    news = news.set_index("id")
-    return news

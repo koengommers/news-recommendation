@@ -1,4 +1,3 @@
-import os
 import pickle
 
 import matplotlib.pyplot as plt
@@ -55,9 +54,6 @@ def plot_gs(users, dest_file=None):
     users["percentile"] = pd.qcut(
         users.history_length, np.linspace(0, 1, 11), labels=np.linspace(0.1, 1, 10)
     )
-    users["subtopic_count_norm"] = users.subtopic_count / users.history_length
-    users["topic_count_norm"] = users.topic_count / users.history_length
-    print(users["subtopic_count_norm"].describe())
     fig, ax = plt.subplots()
     for label, df in users.groupby("percentile"):
         df.gs.plot(kind="kde", ax=ax, label=label)
@@ -67,19 +63,16 @@ def plot_gs(users, dest_file=None):
     plt.show()
 
 
-def main(
-    embeddings_file: str, mind_variant: str = "small", dataset_dir: str = "./data"
-):
-    dataset_path = os.path.join(dataset_dir, f"mind_{mind_variant}")
+def main(embeddings_file: str, mind_variant: str = "small"):
     print("Loading behaviors...")
-    behaviors = load_behaviors(dataset_path)
+    behaviors = load_behaviors(mind_variant)
     print("Processing users...")
     users = convert_behaviors_to_users(behaviors)
     print(users)
     print(users["history"].apply(len).describe())
 
     print("Loading news...")
-    news = load_news(dataset_path)
+    news = load_news(mind_variant, columns=["id", "category", "subcategory"])
     print("Processing news...")
     news = add_news_embeddings(news, embeddings_file)
     print(news)
