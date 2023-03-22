@@ -72,7 +72,7 @@ def load_behaviors(variant="small", splits=None, columns=None):
     if splits is None:
         splits = SPLITS[variant]
 
-    column_names = ["impression_id", "user", "time", "clicked_news", "impressions"]
+    column_names = ["impression_id", "user", "time", "history", "impressions"]
     if columns is None:
         columns = column_names
     column_indices = [column_names.index(col) for col in columns]
@@ -80,7 +80,7 @@ def load_behaviors(variant="small", splits=None, columns=None):
     behaviors = _load_mind_data(
         "behaviors.tsv", variant, splits, columns, column_indices
     )
-    behaviors.clicked_news = behaviors.clicked_news.fillna("").str.split()
+    behaviors.history = behaviors.history.fillna("").str.split()
     return behaviors
 
 
@@ -115,6 +115,5 @@ def _combine_history(histories):
 
 def convert_behaviors_to_users(behaviors):
     grouped = behaviors.groupby("user")
-    users = grouped.agg({"clicked_news": _combine_history})
-    users = users.rename(columns={"clicked_news": "history"})
+    users = grouped.agg({"history": _combine_history})
     return users
