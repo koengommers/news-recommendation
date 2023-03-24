@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import typer
 
-from utils import convert_behaviors_to_users, load_behaviors, load_news
+from utils import load_news, load_users
 
 
 def compute_gs_score(embeddings_of_history):
@@ -49,7 +49,7 @@ def add_news_embeddings(news, embeddings_file):
     return news
 
 
-def plot_gs(users, dest_file=None):
+def plot_gs(users):
     users = users[users["history_length"] > 5]
     users["percentile"] = pd.qcut(
         users.history_length, np.linspace(0, 1, 11), labels=np.linspace(0.1, 1, 10)
@@ -58,24 +58,17 @@ def plot_gs(users, dest_file=None):
     for label, df in users.groupby("percentile"):
         df.gs.plot(kind="kde", ax=ax, label=label)
     plt.legend()
-    if dest_file:
-        plt.savefig(dest_file)
     plt.show()
 
 
 def main(embeddings_file: str, mind_variant: str = "small"):
-    print("Loading behaviors...")
-    behaviors = load_behaviors(mind_variant)
-    print("Processing users...")
-    users = convert_behaviors_to_users(behaviors)
-    print(users)
-    print(users["history"].apply(len).describe())
+    print("Loading users...")
+    users = load_users(mind_variant)
 
     print("Loading news...")
     news = load_news(mind_variant, columns=["id", "category", "subcategory"])
     print("Processing news...")
     news = add_news_embeddings(news, embeddings_file)
-    print(news)
 
     print("Computing GS scores...")
     users = compute_gs_scores(users, news)
@@ -83,7 +76,6 @@ def main(embeddings_file: str, mind_variant: str = "small"):
     users = users.reindex(
         columns=["gs", "topic_count", "subtopic_count", "history_length", "history"]
     )
-    print(users)
     print(users["gs"].describe())
     plot_gs(users)
 

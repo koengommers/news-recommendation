@@ -109,6 +109,12 @@ def load_news(variant="small", splits=None, columns=None):
     return news
 
 
+def load_users(variant="small", splits=None):
+    behaviors = load_behaviors(variant, splits)
+    users = convert_behaviors_to_users(behaviors)
+    return users
+
+
 def _combine_history(histories):
     return histories[histories.apply(len).idxmax()]
 

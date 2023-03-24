@@ -5,8 +5,7 @@ import pandas as pd
 from sklearn import preprocessing
 from torch.utils.data import Dataset
 
-from utils import (convert_behaviors_to_users, download_mind, load_behaviors,
-                   load_news)
+from utils import download_mind, load_news, load_users
 
 
 def news_to_topics(news):
@@ -41,11 +40,7 @@ class TopicReadsDataset(Dataset):
             if not os.path.exists(path):
                 download_mind(variant, dataset_dir)
 
-            print("Loading behaviors...")
-            behaviors = load_behaviors(variant)
-            print("Processing users...")
-            users = convert_behaviors_to_users(behaviors)
-
+            users = load_users(variant)
             news = load_news(variant, columns=["id", "category", "subcategory"])
             self.all_topics = news_to_topics(news)
 
