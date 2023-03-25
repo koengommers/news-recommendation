@@ -12,6 +12,7 @@ torch = "^1.13.1"
 pandas = "^1.5.3"
 scikit-learn = "^1.2.2"
 typer = {extras = ["all"], version = "^0.7.0"}
+nltk = "^3.8.1"
 
 [tool.poetry.dev-dependencies]
 black = "^23.1.0"
