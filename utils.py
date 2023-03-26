@@ -132,7 +132,7 @@ class NltkTokenizer:
 
     @property
     def vocab_size(self):
-        len(self.t2i)
+        return len(self.t2i)
 
     def token2int(self, token):
         if token not in self.t2i:

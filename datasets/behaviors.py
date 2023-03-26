@@ -64,9 +64,6 @@ class BehaviorsDataset(Dataset):
         behaviors["candidate_news"] = (
             behaviors.positive_sample.apply(lambda x: [x]) + behaviors.negative_samples
         )
-        behaviors["clicked"] = behaviors.candidate_news.map(
-            lambda _: [1] + [0] * self.negative_sampling_ratio
-        )
 
         behaviors = behaviors.reset_index(drop=True).drop(
             columns=[
@@ -105,11 +102,13 @@ class BehaviorsDataset(Dataset):
     def __getitem__(self, idx):
         row = self.logs.iloc[idx]
         return {
-            "history": torch.Tensor(
+            "history": torch.tensor(
                 self.pad_history(
                     [self.news[id] for id in row.history[: self.history_length]]
-                )
+                ),
+                dtype=torch.long,
             ),
-            "candidate_news": torch.Tensor([self.news[id] for id in row.candidate_news]),
-            "clicked": torch.Tensor(row.clicked),
+            "candidate_news": torch.tensor(
+                [self.news[id] for id in row.candidate_news], dtype=torch.long
+            ),
         }
