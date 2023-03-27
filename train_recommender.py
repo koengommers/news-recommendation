@@ -85,4 +85,6 @@ def main(
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    app = typer.Typer(add_completion=False, pretty_exceptions_show_locals=False)
+    app.command()(main)
+    app()
