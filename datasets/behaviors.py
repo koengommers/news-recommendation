@@ -2,7 +2,7 @@ import random
 
 from torch.utils.data import Dataset
 
-from utils import load_behaviors, load_news
+from utils.data import load_behaviors, load_news
 
 
 def filter_positive_samples(impressions):

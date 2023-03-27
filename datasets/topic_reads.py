@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn import preprocessing
 from torch.utils.data import Dataset
 
-from utils import download_mind, load_news, load_users
+from utils.data import download_mind, load_news, load_users
 
 
 def news_to_topics(news):

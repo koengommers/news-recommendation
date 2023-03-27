@@ -10,7 +10,8 @@ from transformers import AutoTokenizer
 from datasets.behaviors import BehaviorsDataset
 from models.BERT_NRMS import BERT_NRMS
 from models.NRMS import NRMS
-from utils import NltkTokenizer, collate_fn
+from utils.tokenize import NltkTokenizer
+from utils.collate import collate_fn
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import typer
 
-from utils import load_news, load_users
+from utils.data import load_news, load_users
 
 
 def compute_gs_score(embeddings_of_history):
