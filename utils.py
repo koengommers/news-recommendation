@@ -3,6 +3,7 @@ import zipfile
 
 import pandas as pd
 import requests
+import torch
 from nltk.tokenize import word_tokenize
 from tqdm import tqdm
 
@@ -139,7 +140,7 @@ class NltkTokenizer:
             self.t2i[token] = len(self.t2i) + 1
         return self.t2i[token]
 
-    def tokenize(self, text, length):
+    def __call__(self, text, length):
         tokens = word_tokenize(text)
         tokens = [self.token2int(token) for token in tokens]
         if len(tokens) < length:
@@ -147,3 +148,18 @@ class NltkTokenizer:
             return tokens + [0] * padding_length
         else:
             return tokens[:length]
+
+
+def collate_fn(batch):
+    if isinstance(batch[0], tuple):
+        return tuple(collate_fn(list(x)) for x in zip(*batch))
+    elif isinstance(batch[0], dict):
+        return {key: collate_fn([x[key] for x in batch]) for key in batch[0]}
+    elif isinstance(batch[0], list):
+        if isinstance(batch[0][0], dict):
+            return {
+                key: torch.stack([collate_fn([x[key] for x in y]) for y in batch])
+                for key in batch[0][0]
+            }
+
+    return torch.tensor(batch)

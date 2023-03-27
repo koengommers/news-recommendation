@@ -8,11 +8,11 @@ from models.modules.attention.multihead_self import MultiHeadSelfAttention
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-class NewsEncoder(torch.nn.Module):
+class NewsEncoder(nn.Module):
     def __init__(
         self,
         num_words,
-        word_embedding_dim=300,
+        word_embedding_dim,
         num_attention_heads=15,
         query_vector_dim=200,
         dropout_probability=0.2,

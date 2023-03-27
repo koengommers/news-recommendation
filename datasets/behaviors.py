@@ -1,6 +1,7 @@
+import os
+import pickle
 import random
 
-import torch
 from torch.utils.data import Dataset
 
 from utils import load_behaviors, load_news
@@ -31,11 +32,28 @@ class BehaviorsDataset(Dataset):
         self.num_words_title = num_words_title
         self.history_length = history_length
 
-        print("Loading news...")
-        self.news = self.prepare_news()
+        prepared_dir = os.path.join("./data", "prepared")
+        prepared_path = os.path.join(
+            prepared_dir,
+            f"mind_{mind_variant}_k{negative_sampling_ratio}_behaviors.pickle",
+        )
+        if os.path.exists(prepared_path):
+            with open(prepared_path, "rb") as f:
+                self.news, self.logs = pickle.load(f)
+        else:
+            os.makedirs(prepared_dir, exist_ok=True)
 
-        print("Loading logs...")
-        self.logs = self.prepare_logs()
+            print("Loading news...")
+            self.news = self.prepare_news()
+
+            print("Loading logs...")
+            self.logs = self.prepare_logs()
+
+            with open(prepared_path, "wb") as f:
+                pickle.dump(
+                    (self.news, self.logs),
+                    f,
+                )
 
     def prepare_logs(self):
         behaviors = load_behaviors(self.mind_variant, splits=[self.split])
@@ -101,14 +119,8 @@ class BehaviorsDataset(Dataset):
 
     def __getitem__(self, idx):
         row = self.logs.iloc[idx]
-        return {
-            "history": torch.tensor(
-                self.pad_history(
-                    [self.news[id] for id in row.history[: self.history_length]]
-                ),
-                dtype=torch.long,
-            ),
-            "candidate_news": torch.tensor(
-                [self.news[id] for id in row.candidate_news], dtype=torch.long
-            ),
-        }
+        history = self.pad_history(
+            [self.news[id] for id in row.history[: self.history_length]]
+        )
+        candidate_news = [self.news[id] for id in row.candidate_news]
+        return history, candidate_news

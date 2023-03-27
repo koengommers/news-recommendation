@@ -10,11 +10,10 @@ class NRMS(torch.nn.Module):
     Input 1 + K candidate news and a list of user clicked news, produce the click probability.
     """
 
-    def __init__(self, num_words):
+    def __init__(self, num_words, word_embedding_dim=300):
         super(NRMS, self).__init__()
-        self.num_words = num_words
-        self.news_encoder = NewsEncoder(num_words)
-        self.user_encoder = UserEncoder()
+        self.news_encoder = NewsEncoder(num_words, word_embedding_dim)
+        self.user_encoder = UserEncoder(word_embedding_dim)
 
     def forward(self, candidate_news, clicked_news):
         """
@@ -34,6 +33,10 @@ class NRMS(torch.nn.Module):
         Returns:
           click_probability: batch_size, 1 + K
         """
+        device = next(self.parameters()).device
+        candidate_news = candidate_news.to(device)
+        clicked_news = clicked_news.to(device)
+
         batch_size, n_candidate_news, num_words = candidate_news.size()
         # batch_size, 1 + K, word_embedding_dim
         candidate_news_vector = self.news_encoder(

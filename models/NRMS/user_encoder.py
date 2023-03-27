@@ -6,7 +6,7 @@ from models.modules.attention.multihead_self import MultiHeadSelfAttention
 
 class UserEncoder(torch.nn.Module):
     def __init__(
-        self, word_embedding_dim=300, query_vector_dim=200, num_attention_heads=15
+        self, word_embedding_dim, query_vector_dim=200, num_attention_heads=15
     ):
         super(UserEncoder, self).__init__()
         self.multihead_self_attention = MultiHeadSelfAttention(
