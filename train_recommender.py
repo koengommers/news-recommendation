@@ -10,8 +10,8 @@ from transformers import AutoTokenizer
 from datasets.behaviors import BehaviorsDataset
 from models.BERT_NRMS import BERT_NRMS
 from models.NRMS import NRMS
-from utils.tokenize import NltkTokenizer
 from utils.collate import collate_fn
+from utils.tokenize import NltkTokenizer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -19,6 +19,12 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class Architecture(str, Enum):
     NRMS = "NRMS"
     BERT_NRMS = "BERT-NRMS"
+
+
+class BertPoolingMethod(str, Enum):
+    attention = "attention"
+    average = "average"
+    pooler = "[CLS]"
 
 
 def main(
@@ -30,6 +36,7 @@ def main(
     num_words_title: int = 20,
     history_length: int = 50,
     learning_rate: float = 0.0001,
+    bert_pooling_method: BertPoolingMethod = typer.Option("attention"),
 ):
     pretrained_model_name = "bert-base-uncased"
 
@@ -63,7 +70,7 @@ def main(
     if architecture == Architecture.NRMS:
         model = NRMS(tokenizer.vocab_size + 1).to(device)
     elif architecture == Architecture.BERT_NRMS:
-        model = BERT_NRMS(pretrained_model_name).to(device)
+        model = BERT_NRMS(pretrained_model_name, bert_pooling_method.value).to(device)
 
     # Optimize
     loss_function = nn.CrossEntropyLoss()

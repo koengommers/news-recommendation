@@ -11,10 +11,10 @@ class BERT_NRMS(torch.nn.Module):
     Input 1 + K candidate news and a list of user clicked news, produce the click probability.
     """
 
-    def __init__(self, pretrained_model_name):
+    def __init__(self, pretrained_model_name, bert_pooling_method="attention"):
         super(BERT_NRMS, self).__init__()
         bert_config = AutoConfig.from_pretrained(pretrained_model_name)
-        self.news_encoder = NewsEncoder(bert_config)
+        self.news_encoder = NewsEncoder(bert_config, bert_pooling_method)
         self.user_encoder = UserEncoder(bert_config.hidden_size, num_attention_heads=16)
 
     def forward(self, candidate_news, clicked_news):

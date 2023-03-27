@@ -9,6 +9,7 @@ class NewsEncoder(nn.Module):
     def __init__(
         self,
         bert_config,
+        pooling_method="attention",
         dropout_probability=0.2,
         query_vector_dim=200,
         finetune_n_last_layers=2,
@@ -16,6 +17,9 @@ class NewsEncoder(nn.Module):
         super(NewsEncoder, self).__init__()
         self.dropout_probability = dropout_probability
         self.bert_model = AutoModel.from_config(bert_config)
+
+        assert pooling_method in ["attention", "average", "[CLS]"]
+        self.pooling_method = pooling_method
 
         # Only finetune last layers
         if finetune_n_last_layers >= 0:
@@ -31,15 +35,22 @@ class NewsEncoder(nn.Module):
                 ):
                     param.requires_grad = False
 
-        self.additive_attention = AdditiveAttention(
-            query_vector_dim, bert_config.hidden_size
-        )
+        if pooling_method == "attention":
+            self.additive_attention = AdditiveAttention(
+                query_vector_dim, bert_config.hidden_size
+            )
 
     def forward(self, news):
+        bert_output = self.bert_model(**news)
         last_hidden_state = F.dropout(
-            self.bert_model(**news).last_hidden_state,
+            bert_output.last_hidden_state,
             p=self.dropout_probability,
             training=self.training,
         )
-        news_vector = self.additive_attention(last_hidden_state)
-        return news_vector
+
+        if self.pooling_method == "attention":
+            return self.additive_attention(last_hidden_state)
+        elif self.pooling_method == "average":
+            return last_hidden_state.mean(dim=1)
+        elif self.pooling_method == "[CLS]":
+            return bert_output.pooler_output
