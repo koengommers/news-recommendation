@@ -1,5 +1,3 @@
-import os
-import pickle
 import random
 
 from torch.utils.data import Dataset
@@ -32,28 +30,11 @@ class BehaviorsDataset(Dataset):
         self.num_words_title = num_words_title
         self.history_length = history_length
 
-        prepared_dir = os.path.join("./data", "prepared")
-        prepared_path = os.path.join(
-            prepared_dir,
-            f"mind_{mind_variant}_k{negative_sampling_ratio}_behaviors.pickle",
-        )
-        if os.path.exists(prepared_path):
-            with open(prepared_path, "rb") as f:
-                self.news, self.logs = pickle.load(f)
-        else:
-            os.makedirs(prepared_dir, exist_ok=True)
+        print("Loading news...")
+        self.news = self.prepare_news()
 
-            print("Loading news...")
-            self.news = self.prepare_news()
-
-            print("Loading logs...")
-            self.logs = self.prepare_logs()
-
-            with open(prepared_path, "wb") as f:
-                pickle.dump(
-                    (self.news, self.logs),
-                    f,
-                )
+        print("Loading logs...")
+        self.logs = self.prepare_logs()
 
     def prepare_logs(self):
         behaviors = load_behaviors(self.mind_variant, splits=[self.split])
