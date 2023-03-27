@@ -37,8 +37,8 @@ def main(
     history_length: int = 50,
     learning_rate: float = 0.0001,
     bert_pooling_method: BertPoolingMethod = typer.Option("attention"),
+    pretrained_model_name: str = "bert-base-uncased"
 ):
-    pretrained_model_name = "bert-base-uncased"
 
     # Set up tokenizer
     if architecture == Architecture.BERT_NRMS:
