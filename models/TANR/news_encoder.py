@@ -2,7 +2,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from models.modules.attention.additive import AdditiveAttention
-from models.modules.attention.multihead_self import MultiHeadSelfAttention
 
 
 class NewsEncoder(nn.Module):
@@ -13,7 +12,8 @@ class NewsEncoder(nn.Module):
         pretrained_embeddings=None,
         freeze_pretrained_embeddings=False,
         dropout_probability=0.2,
-        num_attention_heads=15,
+        window_size=3,
+        num_filters=300,
         query_vector_dim=200,
     ):
         super(NewsEncoder, self).__init__()
@@ -30,33 +30,41 @@ class NewsEncoder(nn.Module):
                 num_words, word_embedding_dim, padding_idx=0
             )
 
-        self.multihead_self_attention = MultiHeadSelfAttention(
-            word_embedding_dim, num_attention_heads
+        assert window_size >= 1 and window_size % 2 == 1
+        self.title_CNN = nn.Conv2d(
+            1,
+            num_filters,
+            (window_size, word_embedding_dim),
+            padding=((window_size - 1) // 2, 0),
         )
-        self.additive_attention = AdditiveAttention(
-            query_vector_dim, word_embedding_dim
-        )
+        self.title_attention = AdditiveAttention(query_vector_dim, num_filters)
 
     def forward(self, news):
         """
         Args:
             news: batch_size * num_words_title
         Returns:
-            (shape) batch_size, word_embedding_dim
+            (shape) batch_size, num_filters
         """
         # batch_size, num_words_title, word_embedding_dim
-        news_vector = F.dropout(
+        title_vector = F.dropout(
             self.word_embedding(news),
             p=self.dropout_probability,
             training=self.training,
         )
-        # batch_size, num_words_title, word_embedding_dim
-        multihead_news_vector = self.multihead_self_attention(news_vector)
-        multihead_news_vector = F.dropout(
-            multihead_news_vector,
+        # batch_size, num_filters, num_words_title
+        convoluted_title_vector = self.title_CNN(title_vector.unsqueeze(dim=1)).squeeze(
+            dim=3
+        )
+        # batch_size, num_filters, num_words_title
+        activated_title_vector = F.dropout(
+            F.relu(convoluted_title_vector),
             p=self.dropout_probability,
             training=self.training,
         )
-        # batch_size, word_embedding_dim
-        final_news_vector = self.additive_attention(multihead_news_vector)
-        return final_news_vector
+        # batch_size, num_filters
+        weighted_title_vector = self.title_attention(
+            activated_title_vector.transpose(1, 2)
+        )
+
+        return weighted_title_vector

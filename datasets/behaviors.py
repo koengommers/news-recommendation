@@ -34,6 +34,7 @@ class BehaviorsDataset(Dataset):
         self.num_words_abstract = num_words_abstract
         self.history_length = history_length
         self.news_features = news_features
+        self.categorical_encoders = {}
 
         print("Loading news...")
         self.news = self.prepare_news()
@@ -89,7 +90,6 @@ class BehaviorsDataset(Dataset):
             self.mind_variant, splits=[self.split], columns=self.news_features
         )
 
-        categorical_encoders = {}
         parsed_news = {}
         for index, row in news.iterrows():
             article = {}
@@ -100,9 +100,9 @@ class BehaviorsDataset(Dataset):
                         length=getattr(self, f"num_words_{feature}"),
                     )
                 if feature in categorical_features:
-                    if feature not in categorical_encoders:
-                        categorical_encoders[feature] = CategoricalEncoder()
-                    article[feature] = categorical_encoders[feature].encode(
+                    if feature not in self.categorical_encoders:
+                        self.categorical_encoders[feature] = CategoricalEncoder()
+                    article[feature] = self.categorical_encoders[feature].encode(
                         row[feature]
                     )
             parsed_news[index] = article

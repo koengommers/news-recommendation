@@ -9,6 +9,7 @@ from transformers import AutoTokenizer
 from datasets.behaviors import BehaviorsDataset
 from models.BERT_NRMS import BERT_NRMS
 from models.NRMS import NRMS
+from models.TANR import TANR
 from utils.collate import collate_fn
 from utils.data import load_pretrained_embeddings
 from utils.tokenize import NltkTokenizer
@@ -19,6 +20,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class Architecture(str, Enum):
     NRMS = "NRMS"
     BERT_NRMS = "BERT-NRMS"
+    TANR = "TANR"
 
 
 class BertPoolingMethod(str, Enum):
@@ -62,6 +64,7 @@ def main(
     required_news_features = {
         Architecture.NRMS: ["title"],
         Architecture.BERT_NRMS: ["title"],
+        Architecture.TANR: ["title", "category"],
     }
     news_features = required_news_features[architecture]
     dataset = BehaviorsDataset(
@@ -80,15 +83,20 @@ def main(
 
     # Init model
     if architecture == Architecture.NRMS:
-        if use_pretrained_embeddings:
-            pretrained_embeddings = load_pretrained_embeddings(tokenizer.t2i)
-            model = NRMS(
-                tokenizer.vocab_size + 1,
-                pretrained_embeddings=pretrained_embeddings,
-                freeze_pretrained_embeddings=freeze_pretrained_embeddings,
-            ).to(device)
-        else:
-            model = NRMS(tokenizer.vocab_size + 1).to(device)
+        pretrained_embeddings = load_pretrained_embeddings(tokenizer.t2i) if use_pretrained_embeddings else None
+        model = NRMS(
+            tokenizer.vocab_size + 1,
+            pretrained_embeddings=pretrained_embeddings,
+            freeze_pretrained_embeddings=freeze_pretrained_embeddings,
+        ).to(device)
+    elif architecture == Architecture.TANR:
+        pretrained_embeddings = load_pretrained_embeddings(tokenizer.t2i) if use_pretrained_embeddings else None
+        model = TANR(
+            tokenizer.vocab_size + 1,
+            dataset.categorical_encoders["category"].n_categories + 1,
+            pretrained_embeddings=pretrained_embeddings,
+            freeze_pretrained_embeddings=freeze_pretrained_embeddings,
+        ).to(device)
     elif architecture == Architecture.BERT_NRMS:
         model = BERT_NRMS(pretrained_model_name, bert_pooling_method.value).to(device)
 
