@@ -37,9 +37,9 @@ def main(
     history_length: int = 50,
     learning_rate: float = 0.0001,
     bert_pooling_method: BertPoolingMethod = typer.Option("attention"),
-    pretrained_model_name: str = "bert-base-uncased"
+    pretrained_model_name: str = "bert-base-uncased",
+    num_batches_show_loss: int = 100,
 ):
-
     # Set up tokenizer
     if architecture == Architecture.BERT_NRMS:
         tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name)
@@ -72,14 +72,16 @@ def main(
     elif architecture == Architecture.BERT_NRMS:
         model = BERT_NRMS(pretrained_model_name, bert_pooling_method.value).to(device)
 
-    # Optimize
+    # Init optimizer
     loss_function = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), learning_rate)
 
-    for epoch_num in tqdm(range(epochs)):
-        total_train_loss = 0
+    for epoch_num in tqdm(range(1, epochs + 1)):
+        total_train_loss = 0.0
 
-        for history, candidate_news in tqdm(dataloader):
+        for batch_num, (history, candidate_news) in tqdm(
+            enumerate(dataloader, 1), total=len(dataloader)
+        ):
             optimizer.zero_grad()
             probs = model(candidate_news, history)
             loss = loss_function(probs, torch.zeros(probs.size(0)).long().to(device))
@@ -87,8 +89,13 @@ def main(
             loss.backward()
             optimizer.step()
 
+            if batch_num % num_batches_show_loss == 0:
+                tqdm.write(
+                    f"Loss after {batch_num} batches in epoch {epoch_num}: {total_train_loss / (batch_num)}"
+                )
+
         tqdm.write(
-            f"Epochs: {epoch_num + 1} | Average train loss: {total_train_loss / len(dataloader)}"
+            f"Epochs: {epoch_num} | Average train loss: {total_train_loss / len(dataloader)}"
         )
 
 
