@@ -88,7 +88,7 @@ def load_news(variant="small", splits=None, columns=None):
     if splits is None:
         splits = SPLITS[variant]
 
-    column_names = [
+    available_columns = [
         "id",
         "category",
         "subcategory",
@@ -99,10 +99,13 @@ def load_news(variant="small", splits=None, columns=None):
         "abstract_entities",
     ]
     if columns is None:
-        columns = column_names
-    column_indices = [column_names.index(col) for col in columns]
+        columns = available_columns
+    else:
+        columns = ["id"] + columns
+    column_indices = sorted([available_columns.index(col) for col in columns])
+    column_names = [available_columns[i] for i in column_indices]
 
-    news = _load_mind_data("news.tsv", variant, splits, columns, column_indices)
+    news = _load_mind_data("news.tsv", variant, splits, column_names, column_indices)
     news = news.drop_duplicates(subset="id")
     assert news is not None
     news = news.set_index("id")

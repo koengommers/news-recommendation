@@ -19,8 +19,8 @@ class NRMS(nn.Module):
 
     def forward(self, candidate_news, clicked_news, labels):
         device = next(self.parameters()).device
-        candidate_news = candidate_news.to(device)
-        clicked_news = clicked_news.to(device)
+        candidate_news = candidate_news["title"].to(device)
+        clicked_news = clicked_news["title"].to(device)
 
         batch_size, n_candidate_news, num_words = candidate_news.size()
         # batch_size, 1 + K, word_embedding_dim

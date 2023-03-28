@@ -33,6 +33,7 @@ def main(
     batch_size: int = 64,
     negative_sampling_ratio: int = 4,
     num_words_title: int = 20,
+    num_words_abstract: int = 50,
     history_length: int = 50,
     learning_rate: float = 0.0001,
     bert_pooling_method: BertPoolingMethod = typer.Option("attention"),
@@ -55,13 +56,20 @@ def main(
         tokenize = lambda text, length: tokenizer(text, length)
 
     # Load dataset
+    required_news_features = {
+        Architecture.NRMS: ["title"],
+        Architecture.BERT_NRMS: ["title"],
+    }
+    news_features = required_news_features[architecture]
     dataset = BehaviorsDataset(
         mind_variant,
         "train",
         tokenize,
         negative_sampling_ratio,
         num_words_title,
+        num_words_abstract,
         history_length,
+        news_features,
     )
     dataloader = DataLoader(
         dataset, batch_size=batch_size, collate_fn=collate_fn, drop_last=True

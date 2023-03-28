@@ -20,6 +20,9 @@ class BERT_NRMS(nn.Module):
         self.loss_fn = nn.CrossEntropyLoss()
 
     def forward(self, candidate_news, clicked_news, labels):
+        candidate_news = candidate_news["title"]
+        clicked_news = clicked_news["title"]
+
         device = next(self.parameters()).device
 
         batch_size, n_candidate_news, num_words = candidate_news["input_ids"].size()
