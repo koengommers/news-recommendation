@@ -1,11 +1,12 @@
 import torch
+import torch.nn as nn
 from transformers import AutoConfig
 
 from models.modules.bert.news_encoder import NewsEncoder
 from models.NRMS.user_encoder import UserEncoder
 
 
-class BERT_NRMS(torch.nn.Module):
+class BERT_NRMS(nn.Module):
     """
     BERT-NRMS network.
     Input 1 + K candidate news and a list of user clicked news, produce the click probability.
@@ -16,8 +17,9 @@ class BERT_NRMS(torch.nn.Module):
         bert_config = AutoConfig.from_pretrained(pretrained_model_name)
         self.news_encoder = NewsEncoder(bert_config, bert_pooling_method)
         self.user_encoder = UserEncoder(bert_config.hidden_size, num_attention_heads=16)
+        self.loss_fn = nn.CrossEntropyLoss()
 
-    def forward(self, candidate_news, clicked_news):
+    def forward(self, candidate_news, clicked_news, labels):
         device = next(self.parameters()).device
 
         batch_size, n_candidate_news, num_words = candidate_news["input_ids"].size()
@@ -43,4 +45,4 @@ class BERT_NRMS(torch.nn.Module):
         click_probability = torch.bmm(
             candidate_news_vector, user_vector.unsqueeze(dim=-1)
         ).squeeze(dim=-1)
-        return click_probability
+        return self.loss_fn(click_probability, labels)

@@ -1,7 +1,6 @@
 from enum import Enum
 
 import torch
-import torch.nn as nn
 import typer
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -64,7 +63,9 @@ def main(
         num_words_title,
         history_length,
     )
-    dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=collate_fn)
+    dataloader = DataLoader(
+        dataset, batch_size=batch_size, collate_fn=collate_fn, drop_last=True
+    )
 
     # Init model
     if architecture == Architecture.NRMS:
@@ -73,9 +74,9 @@ def main(
         model = BERT_NRMS(pretrained_model_name, bert_pooling_method.value).to(device)
 
     # Init optimizer
-    loss_function = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), learning_rate)
 
+    # Train
     for epoch_num in tqdm(range(1, epochs + 1)):
         total_train_loss = 0.0
 
@@ -83,10 +84,12 @@ def main(
             enumerate(dataloader, 1), total=len(dataloader)
         ):
             optimizer.zero_grad()
-            probs = model(candidate_news, history)
-            loss = loss_function(probs, torch.zeros(probs.size(0)).long().to(device))
+
+            labels = torch.zeros(batch_size).long().to(device)
+            loss = model(candidate_news, history, labels)
             total_train_loss += loss.item()
             loss.backward()
+
             optimizer.step()
 
             if batch_num % num_batches_show_loss == 0:

@@ -1,10 +1,11 @@
 import torch
+import torch.nn as nn
 
 from models.NRMS.news_encoder import NewsEncoder
 from models.NRMS.user_encoder import UserEncoder
 
 
-class NRMS(torch.nn.Module):
+class NRMS(nn.Module):
     """
     NRMS network.
     Input 1 + K candidate news and a list of user clicked news, produce the click probability.
@@ -14,25 +15,9 @@ class NRMS(torch.nn.Module):
         super(NRMS, self).__init__()
         self.news_encoder = NewsEncoder(num_words, word_embedding_dim)
         self.user_encoder = UserEncoder(word_embedding_dim)
+        self.loss_fn = nn.CrossEntropyLoss()
 
-    def forward(self, candidate_news, clicked_news):
-        """
-        Args:
-            candidate_news:
-                [
-                    {
-                        "title": batch_size * num_words_title
-                    } * (1 + K)
-                ]
-            clicked_news:
-                [
-                    {
-                        "title":batch_size * num_words_title
-                    } * num_clicked_news_a_user
-                ]
-        Returns:
-          click_probability: batch_size, 1 + K
-        """
+    def forward(self, candidate_news, clicked_news, labels):
         device = next(self.parameters()).device
         candidate_news = candidate_news.to(device)
         clicked_news = clicked_news.to(device)
@@ -45,7 +30,9 @@ class NRMS(torch.nn.Module):
 
         batch_size, history_length, num_words = clicked_news.size()
         # batch_size, num_clicked_news_a_user, word_embedding_dim
-        clicked_news_vector = self.news_encoder(clicked_news.reshape(-1, num_words)).reshape(batch_size, history_length, -1)
+        clicked_news_vector = self.news_encoder(
+            clicked_news.reshape(-1, num_words)
+        ).reshape(batch_size, history_length, -1)
 
         # batch_size, word_embedding_dim
         user_vector = self.user_encoder(clicked_news_vector)
@@ -54,7 +41,8 @@ class NRMS(torch.nn.Module):
         click_probability = torch.bmm(
             candidate_news_vector, user_vector.unsqueeze(dim=-1)
         ).squeeze(dim=-1)
-        return click_probability
+
+        return self.loss_fn(click_probability, labels)
 
     def get_news_vector(self, news):
         """
