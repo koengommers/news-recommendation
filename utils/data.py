@@ -1,8 +1,10 @@
 import os
 import zipfile
+from urllib.parse import urlparse
 
 import pandas as pd
 import requests
+import torch
 from tqdm import tqdm
 
 SPLITS = {
@@ -24,34 +26,39 @@ def _get_mind_file(variant, split, filename, dataset_dir="./data"):
     return os.path.join(_get_mind_path(variant, split, dataset_dir), filename)
 
 
+def download_zip(name, url, target_dir):
+    os.makedirs(target_dir, exist_ok=True)
+    filename = os.path.basename(urlparse(url).path)
+    filepath = os.path.join(target_dir, filename)
+    response = requests.get(url, stream=True)
+    total_size = int(response.headers.get("content-length", 0))
+    chunk_size = 1024
+    with tqdm(
+        total=total_size,
+        unit="iB",
+        unit_scale=True,
+        desc=f"Downloading {name}",
+    ) as pbar:
+        with open(filepath, "wb") as file:
+            for data in response.iter_content(chunk_size):
+                pbar.update(len(data))
+                file.write(data)
+
+    with zipfile.ZipFile(filepath) as zip:
+        zip.extractall(target_dir)
+
+    os.remove(filepath)
+
+
 def download_mind(variant="small", dataset_dir="./data"):
     BASE_URL = "https://mind201910small.blob.core.windows.net/release"
-
-    os.makedirs(dataset_dir, exist_ok=True)
 
     assert variant in SPLITS.keys()
 
     for split in SPLITS[variant]:
         filename = f"MIND{variant}_{split}.zip"
-        filepath = os.path.join(dataset_dir, filename)
-        response = requests.get(f"{BASE_URL}/{filename}", stream=True)
-        total_size = int(response.headers.get("content-length", 0))
-        chunk_size = 1024
-        with tqdm(
-            total=total_size,
-            unit="iB",
-            unit_scale=True,
-            desc=f"Downloading {filename}",
-        ) as pbar:
-            with open(filepath, "wb") as file:
-                for data in response.iter_content(chunk_size):
-                    pbar.update(len(data))
-                    file.write(data)
-
-        with zipfile.ZipFile(filepath) as zip:
-            zip.extractall(_get_mind_path(variant, split, dataset_dir))
-
-        os.remove(filepath)
+        url = f"{BASE_URL}/{filename}"
+        download_zip(filename, url, _get_mind_path(variant, split, dataset_dir))
 
 
 def _load_mind_data(filename, variant, splits, column_names, column_indices):
@@ -126,3 +133,33 @@ def convert_behaviors_to_users(behaviors):
     grouped = behaviors.groupby("user")
     users = grouped.agg({"history": _combine_history})
     return users
+
+
+def _download_glove(dataset_dir="./data"):
+    url = "https://nlp.stanford.edu/data/glove.840B.300d.zip"
+    download_zip("GloVe Embeddings", url, os.path.join(dataset_dir, "glove"))
+
+
+def load_pretrained_embeddings(token2int, dataset_dir="./data"):
+    glove_path = os.path.join(dataset_dir, "glove", "glove.840B.300d.txt")
+    if not os.path.exists(glove_path):
+        _download_glove(dataset_dir)
+
+    print("Creating word embedding matrix...")
+    embeddings = torch.empty((len(token2int) + 1, 300))
+    torch.nn.init.normal_(embeddings)
+
+    hits = 0
+    with open(glove_path, "rb") as file:
+        for line in file:
+            values = line.split()
+            token = values[0].decode()
+            if token in token2int:
+                i = token2int[token]
+                embeddings[i] = torch.tensor([float(x) for x in values[1:]])
+                hits += 1
+            if hits == len(token2int):
+                break
+
+    print(f"Missed {len(token2int) - hits} / {len(token2int)} words")
+    return embeddings

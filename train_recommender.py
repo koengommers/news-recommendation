@@ -10,6 +10,7 @@ from datasets.behaviors import BehaviorsDataset
 from models.BERT_NRMS import BERT_NRMS
 from models.NRMS import NRMS
 from utils.collate import collate_fn
+from utils.data import load_pretrained_embeddings
 from utils.tokenize import NltkTokenizer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -39,6 +40,8 @@ def main(
     bert_pooling_method: BertPoolingMethod = typer.Option("attention"),
     pretrained_model_name: str = "bert-base-uncased",
     num_batches_show_loss: int = 100,
+    use_pretrained_embeddings: bool = True,
+    freeze_pretrained_embeddings: bool = False,
 ):
     # Set up tokenizer
     if architecture == Architecture.BERT_NRMS:
@@ -77,7 +80,15 @@ def main(
 
     # Init model
     if architecture == Architecture.NRMS:
-        model = NRMS(tokenizer.vocab_size + 1).to(device)
+        if use_pretrained_embeddings:
+            pretrained_embeddings = load_pretrained_embeddings(tokenizer.t2i)
+            model = NRMS(
+                tokenizer.vocab_size + 1,
+                pretrained_embeddings=pretrained_embeddings,
+                freeze_pretrained_embeddings=freeze_pretrained_embeddings,
+            ).to(device)
+        else:
+            model = NRMS(tokenizer.vocab_size + 1).to(device)
     elif architecture == Architecture.BERT_NRMS:
         model = BERT_NRMS(pretrained_model_name, bert_pooling_method.value).to(device)
 

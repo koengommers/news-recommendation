@@ -11,9 +11,20 @@ class NRMS(nn.Module):
     Input 1 + K candidate news and a list of user clicked news, produce the click probability.
     """
 
-    def __init__(self, num_words, word_embedding_dim=300):
+    def __init__(
+        self,
+        num_words,
+        word_embedding_dim=300,
+        pretrained_embeddings=None,
+        freeze_pretrained_embeddings=False,
+    ):
         super(NRMS, self).__init__()
-        self.news_encoder = NewsEncoder(num_words, word_embedding_dim)
+        self.news_encoder = NewsEncoder(
+            num_words,
+            word_embedding_dim,
+            pretrained_embeddings,
+            freeze_pretrained_embeddings,
+        )
         self.user_encoder = UserEncoder(word_embedding_dim)
         self.loss_fn = nn.CrossEntropyLoss()
 

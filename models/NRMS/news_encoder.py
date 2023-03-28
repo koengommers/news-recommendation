@@ -12,14 +12,27 @@ class NewsEncoder(nn.Module):
     def __init__(
         self,
         num_words,
-        word_embedding_dim,
+        word_embedding_dim=300,
+        pretrained_embeddings=None,
+        freeze_pretrained_embeddings=False,
         num_attention_heads=15,
         query_vector_dim=200,
         dropout_probability=0.2,
     ):
         super(NewsEncoder, self).__init__()
         self.dropout_probability = dropout_probability
-        self.word_embedding = nn.Embedding(num_words, word_embedding_dim, padding_idx=0)
+
+        if pretrained_embeddings is not None:
+            self.word_embedding = nn.Embedding.from_pretrained(
+                pretrained_embeddings,
+                freeze=freeze_pretrained_embeddings,
+                padding_idx=0,
+            )
+        else:
+            self.word_embedding = nn.Embedding(
+                num_words, word_embedding_dim, padding_idx=0
+            )
+
         self.multihead_self_attention = MultiHeadSelfAttention(
             word_embedding_dim, num_attention_heads
         )
