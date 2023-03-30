@@ -8,6 +8,7 @@ from transformers import AutoTokenizer
 
 from datasets.behaviors import BehaviorsDataset
 from models.BERT_NRMS import BERT_NRMS
+from models.MINER import MINER
 from models.NRMS import NRMS
 from models.TANR import TANR
 from utils.collate import collate_fn
@@ -21,12 +22,7 @@ class Architecture(str, Enum):
     NRMS = "NRMS"
     BERT_NRMS = "BERT-NRMS"
     TANR = "TANR"
-
-
-class BertPoolingMethod(str, Enum):
-    attention = "attention"
-    average = "average"
-    pooler = "[CLS]"
+    MINER = "MINER"
 
 
 def main(
@@ -39,14 +35,13 @@ def main(
     num_words_abstract: int = 50,
     history_length: int = 50,
     learning_rate: float = 0.0001,
-    bert_pooling_method: BertPoolingMethod = typer.Option("attention"),
     pretrained_model_name: str = "bert-base-uncased",
     num_batches_show_loss: int = 100,
     use_pretrained_embeddings: bool = True,
     freeze_pretrained_embeddings: bool = False,
 ):
     # Set up tokenizer
-    if architecture == Architecture.BERT_NRMS:
+    if architecture in [Architecture.BERT_NRMS, Architecture.MINER]:
         tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name)
         tokenize = lambda text, length: dict(
             tokenizer(
@@ -65,6 +60,7 @@ def main(
         Architecture.NRMS: ["title"],
         Architecture.BERT_NRMS: ["title"],
         Architecture.TANR: ["title", "category"],
+        Architecture.MINER: ["title"],
     }
     news_features = required_news_features[architecture]
     dataset = BehaviorsDataset(
@@ -98,7 +94,9 @@ def main(
             freeze_pretrained_embeddings=freeze_pretrained_embeddings,
         ).to(device)
     elif architecture == Architecture.BERT_NRMS:
-        model = BERT_NRMS(pretrained_model_name, bert_pooling_method.value).to(device)
+        model = BERT_NRMS(pretrained_model_name).to(device)
+    elif architecture == Architecture.MINER:
+        model = MINER(pretrained_model_name).to(device)
 
     # Init optimizer
     optimizer = torch.optim.Adam(model.parameters(), learning_rate)
