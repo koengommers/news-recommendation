@@ -41,7 +41,7 @@ class TopicReadsDataset(Dataset):
                 download_mind(variant, dataset_dir)
 
             users = load_users(variant)
-            news = load_news(variant, columns=["id", "category", "subcategory"])
+            news = load_news(variant, columns=["category", "subcategory"])
             self.all_topics = news_to_topics(news)
 
             reads = users.explode("history").dropna()
