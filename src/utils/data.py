@@ -11,10 +11,11 @@ SPLITS = {
     "small": ["train", "dev"],
     "large": ["train", "dev", "test"],
 }
+DEFAULT_DATA_DIR = "./data"
 
 
-def _get_mind_path(variant, split=None, dataset_dir="./data"):
-    path = os.path.join(dataset_dir, f"mind_{variant}")
+def _get_mind_path(variant, split=None, data_dir=DEFAULT_DATA_DIR):
+    path = os.path.join(data_dir, f"mind_{variant}")
 
     if split:
         path = os.path.join(path, split)
@@ -22,8 +23,8 @@ def _get_mind_path(variant, split=None, dataset_dir="./data"):
     return path
 
 
-def _get_mind_file(variant, split, filename, dataset_dir="./data"):
-    return os.path.join(_get_mind_path(variant, split, dataset_dir), filename)
+def _get_mind_file(variant, split, filename, data_dir=DEFAULT_DATA_DIR):
+    return os.path.join(_get_mind_path(variant, split, data_dir), filename)
 
 
 def download_zip(name, url, target_dir):
@@ -50,7 +51,7 @@ def download_zip(name, url, target_dir):
     os.remove(filepath)
 
 
-def download_mind(variant="small", dataset_dir="./data"):
+def download_mind(variant="small", data_dir=DEFAULT_DATA_DIR):
     BASE_URL = "https://mind201910small.blob.core.windows.net/release"
 
     assert variant in SPLITS.keys()
@@ -58,24 +59,27 @@ def download_mind(variant="small", dataset_dir="./data"):
     for split in SPLITS[variant]:
         filename = f"MIND{variant}_{split}.zip"
         url = f"{BASE_URL}/{filename}"
-        download_zip(filename, url, _get_mind_path(variant, split, dataset_dir))
+        download_zip(filename, url, _get_mind_path(variant, split, data_dir))
 
 
-def _load_mind_data(filename, variant, splits, column_names, column_indices):
+def _load_mind_data(filename, variant, splits, column_names, column_indices, data_dir=DEFAULT_DATA_DIR):
+    if not os.path.exists(_get_mind_path(variant, data_dir=data_dir)):
+        download_mind(variant, data_dir)
+
     return pd.concat(
         [
             pd.read_table(
-                _get_mind_file(variant, split, filename),
+                _get_mind_file(variant, split, filename, data_dir),
                 names=column_names,
                 usecols=column_indices,
-            )
+            ).assign(split=split)
             for split in splits
         ],
         ignore_index=True,
     )
 
 
-def load_behaviors(variant="small", splits=None, columns=None):
+def load_behaviors(variant="small", splits=None, columns=None, data_dir=DEFAULT_DATA_DIR):
     if splits is None:
         splits = SPLITS[variant]
 
@@ -85,13 +89,14 @@ def load_behaviors(variant="small", splits=None, columns=None):
     column_indices = [column_names.index(col) for col in columns]
 
     behaviors = _load_mind_data(
-        "behaviors.tsv", variant, splits, columns, column_indices
+        "behaviors.tsv", variant, splits, columns, column_indices, data_dir
     )
     behaviors.history = behaviors.history.fillna("").str.split()
+    behaviors.impressions = behaviors.impressions.str.split()
     return behaviors
 
 
-def load_news(variant="small", splits=None, columns=None):
+def load_news(variant="small", splits=None, columns=None, drop_duplicates=True, data_dir=DEFAULT_DATA_DIR):
     if splits is None:
         splits = SPLITS[variant]
 
@@ -112,15 +117,16 @@ def load_news(variant="small", splits=None, columns=None):
     column_indices = sorted([available_columns.index(col) for col in columns])
     column_names = [available_columns[i] for i in column_indices]
 
-    news = _load_mind_data("news.tsv", variant, splits, column_names, column_indices)
-    news = news.drop_duplicates(subset="id")
-    assert news is not None
+    news = _load_mind_data("news.tsv", variant, splits, column_names, column_indices, data_dir)
+    if drop_duplicates:
+        news = news.drop_duplicates(subset="id")
+        assert news is not None
     news = news.set_index("id")
     return news
 
 
-def load_users(variant="small", splits=None):
-    behaviors = load_behaviors(variant, splits)
+def load_users(variant="small", splits=None, data_dir=DEFAULT_DATA_DIR):
+    behaviors = load_behaviors(variant, splits, data_dir=data_dir)
     users = convert_behaviors_to_users(behaviors)
     return users
 
@@ -135,15 +141,15 @@ def convert_behaviors_to_users(behaviors):
     return users
 
 
-def _download_glove(dataset_dir="./data"):
+def _download_glove(data_dir=DEFAULT_DATA_DIR):
     url = "https://nlp.stanford.edu/data/glove.840B.300d.zip"
-    download_zip("GloVe Embeddings", url, os.path.join(dataset_dir, "glove"))
+    download_zip("GloVe Embeddings", url, os.path.join(data_dir, "glove"))
 
 
-def load_pretrained_embeddings(token2int, dataset_dir="./data"):
-    glove_path = os.path.join(dataset_dir, "glove", "glove.840B.300d.txt")
+def load_pretrained_embeddings(token2int, data_dir=DEFAULT_DATA_DIR):
+    glove_path = os.path.join(data_dir, "glove", "glove.840B.300d.txt")
     if not os.path.exists(glove_path):
-        _download_glove(dataset_dir)
+        _download_glove(data_dir)
 
     print("Creating word embedding matrix...")
     embeddings = torch.empty((len(token2int) + 1, 300))

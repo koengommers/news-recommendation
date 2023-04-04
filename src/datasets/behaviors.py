@@ -46,7 +46,6 @@ class BehaviorsDataset(Dataset):
         behaviors = load_behaviors(self.mind_variant, splits=[self.split])
 
         # Split impressions into positive and negative samples
-        behaviors.impressions = behaviors.impressions.str.split()
         behaviors["positive_samples"] = behaviors.impressions.apply(
             filter_positive_samples
         )

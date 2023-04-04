@@ -17,8 +17,8 @@ def news_to_topics(news):
 
 
 class TopicReadsDataset(Dataset):
-    def __init__(self, variant="small", dataset_dir="./data"):
-        prepared_dir = os.path.join(dataset_dir, "prepared")
+    def __init__(self, variant="small", data_dir="./data"):
+        prepared_dir = os.path.join(data_dir, "prepared")
         prepared_path = os.path.join(
             prepared_dir,
             f"mind_{variant}_topic_reads.pickle",
@@ -35,13 +35,8 @@ class TopicReadsDataset(Dataset):
         else:
             os.makedirs(prepared_dir, exist_ok=True)
 
-            # Download MIND if it is not downloaded yet
-            path = os.path.join(dataset_dir, f"mind_{variant}")
-            if not os.path.exists(path):
-                download_mind(variant, dataset_dir)
-
-            users = load_users(variant)
-            news = load_news(variant, columns=["category", "subcategory"])
+            users = load_users(variant, data_dir=data_dir)
+            news = load_news(variant, columns=["category", "subcategory"], data_dir=data_dir)
             self.all_topics = news_to_topics(news)
 
             reads = users.explode("history").dropna()
