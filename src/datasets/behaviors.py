@@ -18,13 +18,14 @@ class BehaviorsDataset(Dataset):
     def __init__(
         self,
         mind_variant: str,
-        split,
+        split: str,
         tokenizer,
         negative_sampling_ratio: int = 4,
         num_words_title: int = 20,
         num_words_abstract: int = 50,
         history_length: int = 50,
         news_features=["title"],
+        categorical_encoders={},
     ):
         self.mind_variant = mind_variant
         self.split = split
@@ -34,7 +35,7 @@ class BehaviorsDataset(Dataset):
         self.num_words_abstract = num_words_abstract
         self.history_length = history_length
         self.news_features = news_features
-        self.categorical_encoders = {}
+        self.categorical_encoders = categorical_encoders
 
         print("Loading news...")
         self.news = self.prepare_news()

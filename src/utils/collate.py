@@ -14,5 +14,7 @@ def collate_fn(batch):
                 key: collate_fn([collate_fn([x[key] for x in y]) for y in batch])
                 for key in batch[0][0]
             }
+    elif isinstance(batch[0], str):
+        return batch
 
     return torch.tensor(batch)
