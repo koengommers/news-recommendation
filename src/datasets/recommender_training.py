@@ -14,7 +14,12 @@ def filter_negative_samples(impressions):
     return [sample[:-2] for sample in impressions if sample.endswith("-0")]
 
 
-class BehaviorsDataset(Dataset):
+class RecommenderTrainingDataset(Dataset):
+    """
+    Dataset for training recommenders with negative sampling.
+    Returns logs of history and sampled impressions.
+    """
+
     def __init__(
         self,
         mind_variant: str,

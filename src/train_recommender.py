@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoTokenizer
 
-from datasets.behaviors import BehaviorsDataset
+from datasets.recommender_training import RecommenderTrainingDataset
 from models.BERT_NRMS import BERT_NRMS
 from models.MINER import MINER
 from models.NRMS import NRMS
@@ -63,7 +63,7 @@ def main(
         Architecture.MINER: ["title"],
     }
     news_features = required_news_features[architecture]
-    dataset = BehaviorsDataset(
+    dataset = RecommenderTrainingDataset(
         mind_variant,
         "train",
         tokenize,
