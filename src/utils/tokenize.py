@@ -4,6 +4,7 @@ from nltk.tokenize import word_tokenize
 class NltkTokenizer:
     def __init__(self):
         self.t2i = {}
+        self._eval = False
 
     @property
     def vocab_size(self):
@@ -11,8 +12,13 @@ class NltkTokenizer:
 
     def token2int(self, token):
         if token not in self.t2i:
+            if self._eval:
+                return 0
             self.t2i[token] = len(self.t2i) + 1
         return self.t2i[token]
+
+    def eval(self, set_to=True):
+        self._eval = set_to
 
     def __call__(self, text, length):
         tokens = word_tokenize(text)

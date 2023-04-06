@@ -28,10 +28,13 @@ class NRMS(nn.Module):
         self.user_encoder = UserEncoder(word_embedding_dim)
         self.loss_fn = nn.CrossEntropyLoss()
 
+    @property
+    def device(self):
+        return next(self.parameters()).device
+
     def forward(self, candidate_news, clicked_news, labels):
-        device = next(self.parameters()).device
-        candidate_news = candidate_news["title"].to(device)
-        clicked_news = clicked_news["title"].to(device)
+        candidate_news = candidate_news["title"].to(self.device)
+        clicked_news = clicked_news["title"].to(self.device)
 
         batch_size, n_candidate_news, num_words = candidate_news.size()
         # batch_size, 1 + K, word_embedding_dim
@@ -66,7 +69,7 @@ class NRMS(nn.Module):
             (shape) batch_size, word_embedding_dim
         """
         # batch_size, word_embedding_dim
-        return self.news_encoder(news)
+        return self.news_encoder(news["title"].to(self.device))
 
     def get_user_vector(self, clicked_news_vector):
         """
@@ -76,7 +79,7 @@ class NRMS(nn.Module):
             (shape) batch_size, word_embedding_dim
         """
         # batch_size, word_embedding_dim
-        return self.user_encoder(clicked_news_vector)
+        return self.user_encoder(clicked_news_vector.to(self.device))
 
     def get_prediction(self, news_vector, user_vector):
         """

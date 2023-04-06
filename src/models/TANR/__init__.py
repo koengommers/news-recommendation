@@ -39,6 +39,10 @@ class TANR(torch.nn.Module):
         self.topic_predictor = nn.Linear(num_filters, num_categories)
         self.loss_fn = nn.CrossEntropyLoss()
 
+    @property
+    def device(self):
+        return next(self.parameters()).device
+
     def forward(self, candidate_news, clicked_news, labels):
         """
         Args:
@@ -109,3 +113,44 @@ class TANR(torch.nn.Module):
         )
 
         return loss
+
+    def get_news_vector(self, news):
+        """
+        Args:
+            news:
+                {
+                    "title": batch_size * num_words_title
+                },
+        Returns:
+            (shape) batch_size, word_embedding_dim
+        """
+        # batch_size, word_embedding_dim
+        return self.news_encoder(news["title"].to(self.device))
+
+    def get_user_vector(self, clicked_news_vector):
+        """
+        Args:
+            clicked_news_vector: batch_size, num_clicked_news_a_user, word_embedding_dim
+        Returns:
+            (shape) batch_size, word_embedding_dim
+        """
+        # batch_size, word_embedding_dim
+        return self.user_encoder(clicked_news_vector.to(self.device))
+
+    def get_prediction(self, news_vector, user_vector):
+        """
+        Args:
+            news_vector: candidate_size, word_embedding_dim
+            user_vector: word_embedding_dim
+        Returns:
+            click_probability: candidate_size
+        """
+        # candidate_size
+        news_vector = news_vector.unsqueeze(0)
+        user_vector = user_vector.unsqueeze(0)
+        probability = (
+            torch.bmm(news_vector, user_vector.unsqueeze(dim=-1))
+            .squeeze(dim=-1)
+            .squeeze(dim=0)
+        )
+        return probability

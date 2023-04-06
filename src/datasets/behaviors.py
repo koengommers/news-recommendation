@@ -35,4 +35,4 @@ class BehaviorsDataset(Dataset):
         impressions, clicked = zip(*map(lambda impression: impression.split('-'), row.impressions))
         clicked = [int(y) for y in clicked]
 
-        return padded_history, impressions, clicked
+        return row.history[:self.history_length], impressions, clicked
