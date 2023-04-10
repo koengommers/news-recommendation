@@ -1,9 +1,10 @@
 from collections import defaultdict
+import hydra
+from omegaconf import DictConfig
 from enum import Enum
 
 import numpy as np
 import torch
-import typer
 from sklearn.metrics import roc_auc_score
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -31,25 +32,11 @@ class Architecture(str, Enum):
     MINER = "MINER"
 
 
-def main(
-    architecture: Architecture,
-    epochs: int = 5,
-    mind_variant: str = "small",
-    batch_size: int = 64,
-    negative_sampling_ratio: int = 4,
-    num_words_title: int = 20,
-    num_words_abstract: int = 50,
-    history_length: int = 50,
-    learning_rate: float = 0.0001,
-    pretrained_model_name: str = "bert-base-uncased",
-    num_batches_show_loss: int = 100,
-    use_pretrained_embeddings: bool = True,
-    freeze_pretrained_embeddings: bool = False,
-    tqdm_disable: bool = False,
-):
+@hydra.main(version_base=None, config_path="../conf", config_name="train_recommender")
+def main(cfg: DictConfig):
     # Set up tokenizer
-    if architecture in [Architecture.BERT_NRMS, Architecture.MINER]:
-        tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name)
+    if cfg.model.architecture in [Architecture.BERT_NRMS, Architecture.MINER]:
+        tokenizer = AutoTokenizer.from_pretrained(cfg.model.pretrained_model_name)
         tokenize = lambda text, length: dict(
             tokenizer(
                 text,
@@ -69,72 +56,72 @@ def main(
         Architecture.TANR: ["title", "category"],
         Architecture.MINER: ["title"],
     }
-    news_features = required_news_features[architecture]
+    news_features = required_news_features[cfg.model.architecture]
     dataset = RecommenderTrainingDataset(
-        mind_variant,
+        cfg.mind_variant,
         "train",
         tokenize,
-        negative_sampling_ratio,
-        num_words_title,
-        num_words_abstract,
-        history_length,
+        cfg.negative_sampling_ratio,
+        cfg.num_words_title,
+        cfg.num_words_abstract,
+        cfg.history_length,
         news_features,
     )
     dataloader = DataLoader(
-        dataset, batch_size=batch_size, collate_fn=collate_fn, drop_last=True
+        dataset, batch_size=cfg.batch_size, collate_fn=collate_fn, drop_last=True
     )
 
     # Init model
-    if architecture == Architecture.NRMS:
+    if cfg.model.architecture == Architecture.NRMS:
         pretrained_embeddings = (
             load_pretrained_embeddings(tokenizer.t2i)
-            if use_pretrained_embeddings
+            if cfg.model.use_pretrained_embeddings
             else None
         )
         model = NRMS(
             tokenizer.vocab_size + 1,
             pretrained_embeddings=pretrained_embeddings,
-            freeze_pretrained_embeddings=freeze_pretrained_embeddings,
+            freeze_pretrained_embeddings=cfg.model.freeze_pretrained_embeddings,
         ).to(device)
-    elif architecture == Architecture.TANR:
+    elif cfg.model.architecture == Architecture.TANR:
         pretrained_embeddings = (
             load_pretrained_embeddings(tokenizer.t2i)
-            if use_pretrained_embeddings
+            if cfg.model.use_pretrained_embeddings
             else None
         )
         model = TANR(
             tokenizer.vocab_size + 1,
             dataset.categorical_encoders["category"].n_categories + 1,
             pretrained_embeddings=pretrained_embeddings,
-            freeze_pretrained_embeddings=freeze_pretrained_embeddings,
+            freeze_pretrained_embeddings=cfg.model.freeze_pretrained_embeddings,
         ).to(device)
-    elif architecture == Architecture.BERT_NRMS:
-        model = BERT_NRMS(pretrained_model_name).to(device)
-    elif architecture == Architecture.MINER:
-        model = MINER(pretrained_model_name).to(device)
+    elif cfg.model.architecture == Architecture.BERT_NRMS:
+        model = BERT_NRMS(cfg.model.pretrained_model_name).to(device)
+    elif cfg.model.architecture == Architecture.MINER:
+        model = MINER(cfg.model.pretrained_model_name).to(device)
 
     # Init optimizer
-    optimizer = torch.optim.Adam(model.parameters(), learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), cfg.learning_rate)
 
-    for epoch_num in tqdm(range(1, epochs + 1), disable=tqdm_disable):
+    for epoch_num in tqdm(range(1, cfg.epochs + 1), disable=cfg.tqdm_disable):
         total_train_loss = 0.0
 
         # Train
         model.train()
 
         for batch_num, (history, candidate_news) in tqdm(
-            enumerate(dataloader, 1), total=len(dataloader), disable=tqdm_disable
+            enumerate(dataloader, 1), total=len(dataloader), disable=cfg.tqdm_disable
         ):
             optimizer.zero_grad()
 
-            labels = torch.zeros(batch_size).long().to(device)
+            labels = torch.zeros(cfg.batch_size).long().to(device)
             loss = model(candidate_news, history, labels)
             total_train_loss += loss.item()
             loss.backward()
 
             optimizer.step()
 
-            if batch_num % num_batches_show_loss == 0:
+            if batch_num % cfg.num_batches_show_loss == 0:
                 tqdm.write(
                     f"Loss after {batch_num} batches in epoch {epoch_num}: {total_train_loss / (batch_num)}"
                 )
@@ -149,30 +136,30 @@ def main(
             tokenizer.eval()
 
         news_dataset = NewsDataset(
-            mind_variant,
+            cfg.mind_variant,
             "dev",
             tokenize,
-            num_words_title,
-            num_words_abstract,
+            cfg.num_words_title,
+            cfg.num_words_abstract,
             dataset.categorical_encoders,
             news_features,
         )
         news_dataloader = DataLoader(
-            news_dataset, batch_size=batch_size, collate_fn=collate_fn, drop_last=False
+            news_dataset, batch_size=cfg.batch_size, collate_fn=collate_fn, drop_last=False
         )
         news_vectors = {}
 
         with torch.no_grad():
             for news_ids, batched_news_features in tqdm(
                 news_dataloader, desc="Encoding news for evaluation",
-                disable=tqdm_disable
+                disable=cfg.tqdm_disable
             ):
                 output = model.get_news_vector(batched_news_features)
                 output = output.to(torch.device("cpu"))
                 news_vectors.update(dict(zip(news_ids, output)))
 
         behaviors_dataset = BehaviorsDataset(
-            mind_variant,
+            cfg.mind_variant,
             "dev",
         )
 
@@ -186,7 +173,7 @@ def main(
 
         with torch.no_grad():
             for history_ids, impression_ids, clicked in tqdm(
-                behaviors_dataset, desc="Evaluating logs", disable=tqdm_disable
+                behaviors_dataset, desc="Evaluating logs", disable=cfg.tqdm_disable
             ):
                 if len(history_ids) == 0:
                     continue
@@ -208,6 +195,4 @@ def main(
 
 
 if __name__ == "__main__":
-    app = typer.Typer(add_completion=False, pretty_exceptions_show_locals=False)
-    app.command()(main)
-    app()
+    main()

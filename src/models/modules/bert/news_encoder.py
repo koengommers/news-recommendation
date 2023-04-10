@@ -18,7 +18,7 @@ class NewsEncoder(nn.Module):
         self.dropout_probability = dropout_probability
         self.bert_model = AutoModel.from_config(bert_config)
 
-        assert pooling_method in ["attention", "average", "[CLS]"]
+        assert pooling_method in ["attention", "average", "pooler"]
         self.pooling_method = pooling_method
 
         # Only finetune last layers
@@ -52,5 +52,5 @@ class NewsEncoder(nn.Module):
             return self.additive_attention(last_hidden_state)
         elif self.pooling_method == "average":
             return last_hidden_state.mean(dim=1)
-        elif self.pooling_method == "[CLS]":
+        elif self.pooling_method == "pooler":
             return bert_output.pooler_output

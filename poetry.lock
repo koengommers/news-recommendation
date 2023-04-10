@@ -1,4 +1,12 @@
 [[package]]
+name = "antlr4-python3-runtime"
+version = "4.9.3"
+description = "ANTLR 4.9.3 runtime for Python 3.7"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "anyio"
 version = "3.6.2"
 description = "High level compatibility layer for multiple asynchronous event loop implementations"
@@ -321,6 +329,19 @@ tensorflow = ["tensorflow", "pydot", "graphviz"]
 testing = ["InquirerPy (==0.3.4)", "jedi", "jinja2", "pytest", "pytest-cov", "pytest-env", "pytest-xdist", "soundfile", "pillow"]
 torch = ["torch"]
 typing = ["types-pyyaml", "types-requests", "types-simplejson", "types-toml", "types-tqdm", "types-urllib3"]
+
+[[package]]
+name = "hydra-core"
+version = "1.3.2"
+description = "A framework for elegantly configuring complex applications"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+antlr4-python3-runtime = ">=4.9.0,<4.10.0"
+omegaconf = ">=2.2,<2.4"
+packaging = "*"
 
 [[package]]
 name = "idna"
@@ -945,6 +966,18 @@ description = "cuDNN runtime libraries"
 category = "main"
 optional = false
 python-versions = ">=3"
+
+[[package]]
+name = "omegaconf"
+version = "2.3.0"
+description = "A flexible configuration library"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+antlr4-python3-runtime = ">=4.9.0,<4.10.0"
+PyYAML = ">=5.1.0"
 
 [[package]]
 name = "packaging"
@@ -1664,9 +1697,10 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "flake8 (<5)", "pytest-co
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "e8e61f9b509f10b54674ed082df0cebdfdebc7d954537b8506068abc65641bd8"
+content-hash = "501d758447a2d449e64b230de4f38ff83d0880bd0eafb0d98403e5c4fb111fb8"
 
 [metadata.files]
+antlr4-python3-runtime = []
 anyio = []
 appnope = []
 argon2-cffi = []
@@ -1693,6 +1727,7 @@ fastjsonschema = []
 filelock = []
 fqdn = []
 huggingface-hub = []
+hydra-core = []
 idna = []
 importlib-metadata = []
 ipykernel = []
@@ -1732,6 +1767,7 @@ nvidia-cublas-cu11 = []
 nvidia-cuda-nvrtc-cu11 = []
 nvidia-cuda-runtime-cu11 = []
 nvidia-cudnn-cu11 = []
+omegaconf = []
 packaging = []
 pandas = []
 pandocfilters = []

@@ -41,7 +41,7 @@ class MINER(nn.Module):
         self,
         pretrained_model_name,
         n_interest_vectors=32,
-        bert_pooling_method="[CLS]",
+        bert_pooling_method="pooler",
         aggregate_method="weighted",
         disagreement_loss_weight=0.8,
     ):
