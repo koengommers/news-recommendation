@@ -2,3 +2,4 @@ __pycache__/
 data/
 outputs/
 multirun/
+.mypy_cache
