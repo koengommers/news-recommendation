@@ -19,15 +19,17 @@ class BERT_NRMS(nn.Module):
         self.user_encoder = UserEncoder(bert_config.hidden_size, num_attention_heads=16)
         self.loss_fn = nn.CrossEntropyLoss()
 
+    @property
+    def device(self):
+        return next(self.parameters()).device
+
     def forward(self, candidate_news, clicked_news, labels):
         candidate_news = candidate_news["title"]
         clicked_news = clicked_news["title"]
 
-        device = next(self.parameters()).device
-
         batch_size, n_candidate_news, num_words = candidate_news["input_ids"].size()
         for key in candidate_news:
-            candidate_news[key] = candidate_news[key].reshape(-1, num_words).to(device)
+            candidate_news[key] = candidate_news[key].reshape(-1, num_words).to(self.device)
 
         candidate_news_vector = self.news_encoder(candidate_news).reshape(
             batch_size, n_candidate_news, -1
@@ -35,7 +37,7 @@ class BERT_NRMS(nn.Module):
 
         batch_size, history_length, num_words = clicked_news["input_ids"].size()
         for key in clicked_news:
-            clicked_news[key] = clicked_news[key].reshape(-1, num_words).to(device)
+            clicked_news[key] = clicked_news[key].reshape(-1, num_words).to(self.device)
 
         clicked_news_vector = self.news_encoder(clicked_news).reshape(
             batch_size, history_length, -1
@@ -49,3 +51,22 @@ class BERT_NRMS(nn.Module):
             candidate_news_vector, user_vector.unsqueeze(dim=-1)
         ).squeeze(dim=-1)
         return self.loss_fn(click_probability, labels)
+
+    def get_news_vector(self, news):
+        news = news["title"]
+        for key in news:
+            news[key] = news[key].to(self.device)
+        return self.news_encoder(news)
+
+    def get_user_vector(self, clicked_news_vector):
+        return self.user_encoder(clicked_news_vector.to(self.device))
+
+    def get_prediction(self, news_vector, user_vector):
+        news_vector = news_vector.unsqueeze(0)
+        user_vector = user_vector.unsqueeze(0)
+        probability = (
+            torch.bmm(news_vector, user_vector.unsqueeze(dim=-1))
+            .squeeze(dim=-1)
+            .squeeze(dim=0)
+        )
+        return probability
