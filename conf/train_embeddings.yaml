@@ -1,0 +1,6 @@
+epochs: 5
+mind_variant: "small"
+embedding_dim: 100
+batch_size: 128
+learning_rate: 0.001
+n_negative_samples: 4

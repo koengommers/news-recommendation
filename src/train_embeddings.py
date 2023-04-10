@@ -1,8 +1,9 @@
 import pickle
 
+import hydra
 import torch
 import torch.nn as nn
-import typer
+from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -14,33 +15,25 @@ from models.skipgram import Skipgram
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def main(
-    epochs: int = 5,
-    mind_variant: str = "small",
-    embedding_dim: int = 100,
-    batch_size: int = 128,
-    learning_rate: float = 0.001,
-    n_negative_samples: int = 4,
-):
-    dataset = TopicReadsDataset(variant=mind_variant)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+@hydra.main(version_base=None, config_path="../conf", config_name="train_embeddings")
+def main(cfg: DictConfig):
+    dataset = TopicReadsDataset(variant=cfg.mind_variant)
+    dataloader = DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True)
 
     model = Skipgram(
         dataset.number_of_topics,
         dataset.number_of_users,
-        embedding_dim,
+        cfg.embedding_dim,
     ).to(device)
     loss_function = nn.BCEWithLogitsLoss()
-    optimizer = torch.optim.Adam(model.parameters(), learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), cfg.learning_rate)
 
     embeddings = next(model.target_embeddings.parameters()).cpu().data.numpy()
     metrics = evaluate_embeddings(embeddings, dataset)
     metrics_string = " | ".join(
         [f"{key}: {value:.5f}" for key, value in metrics.items()]
     )
-    tqdm.write(
-        f"Epochs: 0 | {metrics_string}"
-    )
+    tqdm.write(f"Epochs: 0 | {metrics_string}")
     print_closest_topics(
         embeddings,
         dataset.topic_encoder,
@@ -53,7 +46,7 @@ def main(
         ],
     )
 
-    for epoch_num in tqdm(range(epochs)):
+    for epoch_num in tqdm(range(cfg.epochs)):
         total_train_loss = 0
 
         for target, context_positive in tqdm(dataloader):
@@ -62,12 +55,12 @@ def main(
             target = target.to(torch.long).to(device)
             context_positive = context_positive.to(torch.long)
             context_negative = torch.randint(
-                dataset.number_of_users, (current_batch_size, n_negative_samples)
+                dataset.number_of_users, (current_batch_size, cfg.n_negative_samples)
             )
             context = torch.cat([context_positive, context_negative], dim=1).to(device)
 
             y_pos = torch.ones(current_batch_size, 1)
-            y_neg = torch.zeros(current_batch_size, n_negative_samples)
+            y_neg = torch.zeros(current_batch_size, cfg.n_negative_samples)
             y = torch.cat([y_pos, y_neg], dim=1).to(device)
 
             model.zero_grad()
@@ -84,9 +77,7 @@ def main(
             [f"{key}: {value:.5f}" for key, value in metrics.items()]
         )
 
-        tqdm.write(
-            f"Epochs: {epoch_num + 1} | {metrics_string}"
-        )
+        tqdm.write(f"Epochs: {epoch_num + 1} | {metrics_string}")
         print_closest_topics(
             embeddings,
             dataset.topic_encoder,
@@ -105,4 +96,4 @@ def main(
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    main()
