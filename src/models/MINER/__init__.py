@@ -61,15 +61,17 @@ class MINER(nn.Module):
         if aggregate_method == "weighted":
             self.score_aggregator = TargetAwareAttention(bert_config.hidden_size)
 
+    @property
+    def device(self):
+        return next(self.parameters()).device
+
     def forward(self, candidate_news, clicked_news, labels):
         candidate_news = candidate_news["title"]
         clicked_news = clicked_news["title"]
 
-        device = next(self.parameters()).device
-
         batch_size, n_candidate_news, num_words = candidate_news["input_ids"].size()
         for key in candidate_news:
-            candidate_news[key] = candidate_news[key].reshape(-1, num_words).to(device)
+            candidate_news[key] = candidate_news[key].reshape(-1, num_words).to(self.device)
         # batch_size, n_candidates, hidden_size
         candidate_news_vector = self.news_encoder(candidate_news).reshape(
             batch_size, n_candidate_news, -1
@@ -77,7 +79,7 @@ class MINER(nn.Module):
 
         batch_size, history_length, num_words = clicked_news["input_ids"].size()
         for key in clicked_news:
-            clicked_news[key] = clicked_news[key].reshape(-1, num_words).to(device)
+            clicked_news[key] = clicked_news[key].reshape(-1, num_words).to(self.device)
         # batch_size, history_length, hidden_size
         clicked_news_vector = self.news_encoder(clicked_news).reshape(
             batch_size, history_length, -1
@@ -108,3 +110,37 @@ class MINER(nn.Module):
         loss = newsrec_loss + self.disagreement_loss_weight * disagreement_loss
 
         return loss
+
+    def get_news_vector(self, news):
+        news = news["title"]
+        for key in news:
+            news[key] = news[key].to(self.device)
+        return self.news_encoder(news)
+
+    def get_user_vector(self, clicked_news_vector):
+        return self.user_encoder(clicked_news_vector.to(self.device))
+
+    def get_prediction(self, news_vector, user_vectors):
+        """
+        Args:
+            news_vector: candidate_size, word_embedding_dim
+            user_vector: word_embedding_dim
+        Returns:
+            click_probability: candidate_size
+        """
+        # candidate_size
+        news_vector = news_vector.unsqueeze(0)
+        user_vectors = user_vectors.unsqueeze(0)
+        matching_scores = torch.bmm(news_vector, user_vectors.transpose(1, 2))
+
+        # batch_size, 1 + K
+        if self.aggregate_method == "max":
+            click_probability = torch.max(matching_scores, dim=2)[0].squeeze(0)
+        elif self.aggregate_method == "average":
+            click_probability = torch.mean(matching_scores, dim=2).squeeze(0)
+        elif self.aggregate_method == "weighted":
+            click_probability = self.score_aggregator(
+                user_vectors, news_vector, matching_scores
+            ).squeeze(0)
+
+        return click_probability
