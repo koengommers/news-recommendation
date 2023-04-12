@@ -1,33 +1,34 @@
 import numpy as np
 
 
-def mrr(y_true, y_scores):
+def mrr(y_true: list[int], y_scores: list[float]) -> np.floating:
     sorted = np.flip(np.argsort(y_scores), axis=-1)
-    ranks = []
+    ranks: list[int] = []
     for i in range(len(y_true)):
         rank = np.argwhere(sorted[i] == y_true[i])[0][0] + 1
         ranks.append(rank)
-    ranks = np.array(ranks)
-    return np.mean(1 / ranks)
+    ranks_np = np.array(ranks)
+    return np.mean(1 / ranks_np)
 
 
-# taken from https://github.com/msnews/MIND/blob/master/evaluate.py
-def dcg_score(y_true, y_score, k=10):
+# taken from original MIND evaluation script: https://github.com/msnews/MIND/blob/master/evaluate.py
+# only added type annotations
+def dcg_score(y_true: list[int], y_score: list[int], k: int=10) -> np.floating:
     order = np.argsort(y_score)[::-1]
-    y_true = np.take(y_true, order[:k])
-    gains = 2**y_true - 1
-    discounts = np.log2(np.arange(len(y_true)) + 2)
+    result = np.take(y_true, order[:k])
+    gains = 2**result - 1
+    discounts = np.log2(np.arange(len(result)) + 2)
     return np.sum(gains / discounts)
 
 
-def ndcg_score(y_true, y_score, k=10):
+def ndcg_score(y_true: list[int], y_score: list[int], k: int=10) -> np.floating:
     best = dcg_score(y_true, y_true, k)
     actual = dcg_score(y_true, y_score, k)
     return actual / best
 
 
-def mrr_score(y_true, y_score):
+def mrr_score(y_true: list[int], y_score: list[int]) -> np.floating:
     order = np.argsort(y_score)[::-1]
-    y_true = np.take(y_true, order)
-    rr_score = y_true / (np.arange(len(y_true)) + 1)
+    result = np.take(y_true, order)
+    rr_score = result / (np.arange(len(result)) + 1)
     return np.sum(rr_score) / np.sum(y_true)

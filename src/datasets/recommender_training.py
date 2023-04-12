@@ -1,17 +1,23 @@
 import random
+from typing import Callable, Union
 
+import pandas as pd
 from torch.utils.data import Dataset
 
 from utils.data import load_behaviors, load_news
 from utils.encode import CategoricalEncoder
 
 
-def filter_positive_samples(impressions):
+def filter_positive_samples(impressions: list[str]) -> list[str]:
     return [sample[:-2] for sample in impressions if sample.endswith("-1")]
 
 
-def filter_negative_samples(impressions):
+def filter_negative_samples(impressions: list[str]) -> list[str]:
     return [sample[:-2] for sample in impressions if sample.endswith("-0")]
+
+
+TokenizerOutput = Union[list[int], dict[str, list[int]]]
+NewsItem = dict[str, Union[TokenizerOutput, int]]
 
 
 class RecommenderTrainingDataset(Dataset):
@@ -24,13 +30,13 @@ class RecommenderTrainingDataset(Dataset):
         self,
         mind_variant: str,
         split: str,
-        tokenizer,
+        tokenizer: Callable[[str, int], TokenizerOutput],
         negative_sampling_ratio: int = 4,
         num_words_title: int = 20,
         num_words_abstract: int = 50,
         history_length: int = 50,
-        news_features=["title"],
-        categorical_encoders={},
+        news_features: list[str] = ["title"],
+        categorical_encoders: dict[str, CategoricalEncoder] = {},
     ):
         self.mind_variant = mind_variant
         self.split = split
@@ -48,7 +54,7 @@ class RecommenderTrainingDataset(Dataset):
         print("Loading logs...")
         self.logs = self.prepare_logs()
 
-    def prepare_logs(self):
+    def prepare_logs(self) -> pd.DataFrame:
         behaviors = load_behaviors(self.mind_variant, splits=[self.split])
 
         # Split impressions into positive and negative samples
@@ -87,7 +93,7 @@ class RecommenderTrainingDataset(Dataset):
 
         return behaviors
 
-    def prepare_news(self):
+    def prepare_news(self) -> dict[str, NewsItem]:
         categorical_features = ["category", "subcategory"]
         textual_features = ["title", "abstract"]
 
@@ -95,14 +101,14 @@ class RecommenderTrainingDataset(Dataset):
             self.mind_variant, splits=[self.split], columns=self.news_features
         )
 
-        parsed_news = {}
+        parsed_news: dict[str, NewsItem] = {}
         for index, row in news.iterrows():
-            article = {}
+            article: NewsItem = {}
             for feature in self.news_features:
                 if feature in textual_features:
                     article[feature] = self.tokenizer(
                         row[feature].lower(),
-                        length=getattr(self, f"num_words_{feature}"),
+                        getattr(self, f"num_words_{feature}"),
                     )
                 if feature in categorical_features:
                     if feature not in self.categorical_encoders:
@@ -110,14 +116,14 @@ class RecommenderTrainingDataset(Dataset):
                     article[feature] = self.categorical_encoders[feature].encode(
                         row[feature]
                     )
-            parsed_news[index] = article
+            parsed_news[str(index)] = article
 
         return parsed_news
 
-    def pad_history(self, history):
+    def pad_history(self, history: list[NewsItem]) -> list[NewsItem]:
         padding_all = {
-            "title": self.tokenizer("", length=self.num_words_title),
-            "abstract": self.tokenizer("", length=self.num_words_abstract),
+            "title": self.tokenizer("", self.num_words_title),
+            "abstract": self.tokenizer("", self.num_words_abstract),
             "category": 0,
             "subcategory": 0,
         }
@@ -125,10 +131,10 @@ class RecommenderTrainingDataset(Dataset):
         padding_length = self.history_length - len(history)
         return [padding] * padding_length + history
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.logs)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> tuple[list[NewsItem], list[NewsItem]]:
         row = self.logs.iloc[idx]
         history = self.pad_history(
             [self.news[id] for id in row.history[: self.history_length]]

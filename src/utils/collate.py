@@ -1,7 +1,8 @@
 import torch
+from typing import Any
 
 
-def collate_fn(batch):
+def collate_fn(batch: Any) -> Any:
     if isinstance(batch[0], tuple):
         return tuple(collate_fn(list(x)) for x in zip(*batch))
     elif isinstance(batch[0], dict):

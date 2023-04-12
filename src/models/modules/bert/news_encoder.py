@@ -1,6 +1,7 @@
 import torch.nn as nn
+import torch
 import torch.nn.functional as F
-from transformers import AutoModel
+from transformers import AutoModel, PretrainedConfig
 
 from models.modules.attention.additive import AdditiveAttention
 
@@ -8,11 +9,11 @@ from models.modules.attention.additive import AdditiveAttention
 class NewsEncoder(nn.Module):
     def __init__(
         self,
-        bert_config,
-        pooling_method="attention",
-        dropout_probability=0.2,
-        query_vector_dim=200,
-        finetune_n_last_layers=2,
+        bert_config: PretrainedConfig,
+        pooling_method: str = "attention",
+        dropout_probability: float = 0.2,
+        query_vector_dim: int = 200,
+        finetune_n_last_layers: int = 2,
     ):
         super(NewsEncoder, self).__init__()
         self.dropout_probability = dropout_probability
@@ -40,7 +41,7 @@ class NewsEncoder(nn.Module):
                 query_vector_dim, bert_config.hidden_size
             )
 
-    def forward(self, news):
+    def forward(self, news: dict[str, torch.Tensor]) -> torch.Tensor:
         bert_output = self.bert_model(**news)
         last_hidden_state = F.dropout(
             bert_output.last_hidden_state,
@@ -54,3 +55,5 @@ class NewsEncoder(nn.Module):
             return last_hidden_state.mean(dim=1)
         elif self.pooling_method == "pooler":
             return bert_output.pooler_output
+        else:
+            raise ValueError("Unknown pooling method")

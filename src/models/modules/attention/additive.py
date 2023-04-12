@@ -11,8 +11,8 @@ class AdditiveAttention(torch.nn.Module):
 
     def __init__(
         self,
-        query_vector_dim,
-        candidate_vector_dim,
+        query_vector_dim: int,
+        candidate_vector_dim: int,
     ):
         super(AdditiveAttention, self).__init__()
         self.linear = nn.Linear(candidate_vector_dim, query_vector_dim)
@@ -20,7 +20,7 @@ class AdditiveAttention(torch.nn.Module):
             torch.empty(query_vector_dim).uniform_(-0.1, 0.1)
         )
 
-    def forward(self, candidate_vector):
+    def forward(self, candidate_vector: torch.Tensor) -> torch.Tensor:
         """
         Args:
             candidate_vector: batch_size, candidate_size, candidate_vector_dim

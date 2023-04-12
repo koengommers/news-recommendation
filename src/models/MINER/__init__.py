@@ -1,3 +1,5 @@
+from enum import Enum
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,11 +10,16 @@ from models.modules.bert.news_encoder import NewsEncoder
 
 
 class TargetAwareAttention(nn.Module):
-    def __init__(self, dimension):
+    def __init__(self, dimension: int):
         super(TargetAwareAttention, self).__init__()
         self.linear = nn.Linear(dimension, dimension)
 
-    def forward(self, interest_vectors, candidate_news_vectors, matching_scores):
+    def forward(
+        self,
+        interest_vectors: torch.Tensor,
+        candidate_news_vectors: torch.Tensor,
+        matching_scores: torch.Tensor,
+    ) -> torch.Tensor:
         """
         Args:
             interest_vectors: batch_size, n_interest_vectors, hidden_dim
@@ -39,11 +46,11 @@ class MINER(nn.Module):
 
     def __init__(
         self,
-        pretrained_model_name,
-        n_interest_vectors=32,
-        bert_pooling_method="pooler",
-        aggregate_method="weighted",
-        disagreement_loss_weight=0.8,
+        pretrained_model_name: str,
+        n_interest_vectors: int = 32,
+        bert_pooling_method: str = "pooler",
+        aggregate_method: str = "weighted",
+        disagreement_loss_weight: float = 0.8,
     ):
         super(MINER, self).__init__()
         self.aggregate_method = aggregate_method
@@ -62,26 +69,37 @@ class MINER(nn.Module):
             self.score_aggregator = TargetAwareAttention(bert_config.hidden_size)
 
     @property
-    def device(self):
+    def device(self) -> torch.device:
         return next(self.parameters()).device
 
-    def forward(self, candidate_news, clicked_news, labels):
-        candidate_news = candidate_news["title"]
-        clicked_news = clicked_news["title"]
+    def forward(
+        self,
+        candidate_news: dict[str, dict[str, torch.Tensor]],
+        clicked_news: dict[str, dict[str, torch.Tensor]],
+        labels: torch.Tensor,
+    ) -> torch.Tensor:
+        candidate_news_titles = candidate_news["title"]
+        clicked_news_titles = clicked_news["title"]
 
-        batch_size, n_candidate_news, num_words = candidate_news["input_ids"].size()
-        for key in candidate_news:
-            candidate_news[key] = candidate_news[key].reshape(-1, num_words).to(self.device)
+        batch_size, n_candidate_news, num_words = candidate_news_titles[
+            "input_ids"
+        ].size()
+        for key in candidate_news_titles:
+            candidate_news_titles[key] = (
+                candidate_news_titles[key].reshape(-1, num_words).to(self.device)
+            )
         # batch_size, n_candidates, hidden_size
-        candidate_news_vector = self.news_encoder(candidate_news).reshape(
+        candidate_news_vector = self.news_encoder(candidate_news_titles).reshape(
             batch_size, n_candidate_news, -1
         )
 
-        batch_size, history_length, num_words = clicked_news["input_ids"].size()
-        for key in clicked_news:
-            clicked_news[key] = clicked_news[key].reshape(-1, num_words).to(self.device)
+        batch_size, history_length, num_words = clicked_news_titles["input_ids"].size()
+        for key in clicked_news_titles:
+            clicked_news_titles[key] = (
+                clicked_news_titles[key].reshape(-1, num_words).to(self.device)
+            )
         # batch_size, history_length, hidden_size
-        clicked_news_vector = self.news_encoder(clicked_news).reshape(
+        clicked_news_vector = self.news_encoder(clicked_news_titles).reshape(
             batch_size, history_length, -1
         )
 
@@ -105,22 +123,26 @@ class MINER(nn.Module):
             click_probability = self.score_aggregator(
                 user_vectors, candidate_news_vector, matching_scores
             )
+        else:
+            raise ValueError("Unknown aggregate method")
 
         newsrec_loss = self.loss_fn(click_probability, labels)
         loss = newsrec_loss + self.disagreement_loss_weight * disagreement_loss
 
         return loss
 
-    def get_news_vector(self, news):
-        news = news["title"]
-        for key in news:
-            news[key] = news[key].to(self.device)
-        return self.news_encoder(news)
+    def get_news_vector(self, news: dict[str, dict[str, torch.Tensor]]) -> torch.Tensor:
+        news_titles = news["title"]
+        for key in news_titles:
+            news_titles[key] = news_titles[key].to(self.device)
+        return self.news_encoder(news_titles)
 
-    def get_user_vector(self, clicked_news_vector):
+    def get_user_vector(self, clicked_news_vector: torch.Tensor) -> torch.Tensor:
         return self.user_encoder(clicked_news_vector.to(self.device))
 
-    def get_prediction(self, news_vector, user_vectors):
+    def get_prediction(
+        self, news_vector: torch.Tensor, user_vectors: torch.Tensor
+    ) -> torch.Tensor:
         """
         Args:
             news_vector: candidate_size, word_embedding_dim
@@ -142,5 +164,7 @@ class MINER(nn.Module):
             click_probability = self.score_aggregator(
                 user_vectors, news_vector, matching_scores
             ).squeeze(0)
+        else:
+            raise ValueError("Unknown aggregate method")
 
         return click_probability

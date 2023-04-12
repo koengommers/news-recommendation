@@ -1,3 +1,6 @@
+from typing import Optional
+
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -7,14 +10,14 @@ from models.modules.attention.additive import AdditiveAttention
 class NewsEncoder(nn.Module):
     def __init__(
         self,
-        num_words,
-        word_embedding_dim=300,
-        pretrained_embeddings=None,
-        freeze_pretrained_embeddings=False,
-        dropout_probability=0.2,
-        window_size=3,
-        num_filters=300,
-        query_vector_dim=200,
+        num_words: int,
+        word_embedding_dim: int = 300,
+        pretrained_embeddings: Optional[torch.Tensor] = None,
+        freeze_pretrained_embeddings: bool = False,
+        dropout_probability: float = 0.2,
+        window_size: int = 3,
+        num_filters: int = 300,
+        query_vector_dim: int = 200,
     ):
         super(NewsEncoder, self).__init__()
         self.dropout_probability = dropout_probability
@@ -39,7 +42,7 @@ class NewsEncoder(nn.Module):
         )
         self.title_attention = AdditiveAttention(query_vector_dim, num_filters)
 
-    def forward(self, news):
+    def forward(self, news: torch.Tensor) -> torch.Tensor:
         """
         Args:
             news: batch_size * num_words_title

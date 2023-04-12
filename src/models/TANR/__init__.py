@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 
@@ -13,14 +15,14 @@ class TANR(torch.nn.Module):
 
     def __init__(
         self,
-        num_words,
-        num_categories,
-        word_embedding_dim=300,
-        pretrained_embeddings=None,
-        freeze_pretrained_embeddings=False,
-        window_size=3,
-        num_filters=300,
-        topic_classification_loss_weight=0.2,
+        num_words: int,
+        num_categories: int,
+        word_embedding_dim: int = 300,
+        pretrained_embeddings: Optional[torch.Tensor] = None,
+        freeze_pretrained_embeddings: bool = False,
+        window_size: int = 3,
+        num_filters: int = 300,
+        topic_classification_loss_weight: float = 0.2,
     ):
         super(TANR, self).__init__()
         self.num_filters = num_filters
@@ -40,10 +42,15 @@ class TANR(torch.nn.Module):
         self.loss_fn = nn.CrossEntropyLoss()
 
     @property
-    def device(self):
+    def device(self) -> torch.device:
         return next(self.parameters()).device
 
-    def forward(self, candidate_news, clicked_news, labels):
+    def forward(
+        self,
+        candidate_news: dict[str, torch.Tensor],
+        clicked_news: dict[str, torch.Tensor],
+        labels: torch.Tensor,
+    ) -> torch.Tensor:
         """
         Args:
             candidate_news:
@@ -114,7 +121,7 @@ class TANR(torch.nn.Module):
 
         return loss
 
-    def get_news_vector(self, news):
+    def get_news_vector(self, news: dict[str, torch.Tensor]) -> torch.Tensor:
         """
         Args:
             news:
@@ -127,7 +134,7 @@ class TANR(torch.nn.Module):
         # batch_size, word_embedding_dim
         return self.news_encoder(news["title"].to(self.device))
 
-    def get_user_vector(self, clicked_news_vector):
+    def get_user_vector(self, clicked_news_vector: torch.Tensor) -> torch.Tensor:
         """
         Args:
             clicked_news_vector: batch_size, num_clicked_news_a_user, word_embedding_dim
@@ -137,7 +144,9 @@ class TANR(torch.nn.Module):
         # batch_size, word_embedding_dim
         return self.user_encoder(clicked_news_vector.to(self.device))
 
-    def get_prediction(self, news_vector, user_vector):
+    def get_prediction(
+        self, news_vector: torch.Tensor, user_vector: torch.Tensor
+    ) -> torch.Tensor:
         """
         Args:
             news_vector: candidate_size, word_embedding_dim
