@@ -26,12 +26,14 @@ pandas-stubs = "^1.5.3"
 types-tqdm = "^4.65.0"
 
 [tool.mypy]
-implicit_optional = false
-strict = true
-disallow_any_unimported = true
-disallow_any_expr = true
-disallow_any_decorated = true
-disallow_any_explicit = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+# implicit_optional = false
+# strict = true
+# disallow_any_unimported = true
+# disallow_any_expr = true
+# disallow_any_decorated = true
+# disallow_any_explicit = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

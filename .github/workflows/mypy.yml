@@ -3,7 +3,7 @@ name: Mypy
 on: [push]
 
 jobs:
-  test:
+  check_types:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
