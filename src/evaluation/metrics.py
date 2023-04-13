@@ -15,7 +15,7 @@ def mrr(y_true: list[int], y_scores: list[float]) -> np.floating:
 
 def gs_score(embeddings: np.ndarray) -> Optional[np.floating]:
     if len(embeddings) == 0:
-        return
+        return None
 
     center = np.mean(embeddings, axis=0)
     cosine_similarities = [
