@@ -1,8 +1,8 @@
 import pickle
-import numpy as np
 from typing import Union
 
 import hydra
+import numpy as np
 import torch
 import torch.nn as nn
 from omegaconf import DictConfig
@@ -49,7 +49,7 @@ def main(cfg: DictConfig) -> None:
     )
 
     for epoch_num in tqdm(range(cfg.epochs)):
-        total_train_loss = 0
+        train_losses = []
 
         for target, context_positive in tqdm(dataloader):
             current_batch_size = target.size(0)
@@ -68,13 +68,13 @@ def main(cfg: DictConfig) -> None:
             model.zero_grad()
             probs = model(target, context)
             loss = loss_function(probs, y)
-            total_train_loss += loss.item()
+            train_losses.append(loss.item())
             loss.backward()
             optimizer.step()
 
         embeddings = next(model.target_embeddings.parameters()).cpu().data.numpy()
         metrics = evaluate_embeddings(embeddings, dataset)
-        metrics["Train loss"] = np.floating(total_train_loss / len(dataloader))
+        metrics["Train loss"] = np.mean(train_losses)
         metrics_string = " | ".join(
             [f"{key}: {value:.5f}" for key, value in metrics.items()]
         )
