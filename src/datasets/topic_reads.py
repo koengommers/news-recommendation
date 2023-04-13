@@ -18,54 +18,24 @@ def news_to_topics(news: pd.DataFrame) -> pd.DataFrame:
 
 class TopicReadsDataset(Dataset):
     def __init__(self, variant: str = "small", data_dir: str = "./data"):
-        prepared_dir = os.path.join(data_dir, "prepared")
-        prepared_path = os.path.join(
-            prepared_dir,
-            f"mind_{variant}_topic_reads.pickle",
+        users = load_users(variant, data_dir=data_dir)
+        news = load_news(
+            variant, columns=["category", "subcategory"], data_dir=data_dir
         )
-        if os.path.exists(prepared_path):
-            with open(prepared_path, "rb") as f:
-                (
-                    self.topic_encoder,
-                    self.topics,
-                    self.user_encoder,
-                    self.contexts,
-                    self.all_topics,
-                ) = pickle.load(f)
-        else:
-            os.makedirs(prepared_dir, exist_ok=True)
+        self.all_topics = news_to_topics(news)
 
-            users = load_users(variant, data_dir=data_dir)
-            news = load_news(
-                variant, columns=["category", "subcategory"], data_dir=data_dir
-            )
-            self.all_topics = news_to_topics(news)
+        reads = users.explode("history").dropna()
+        reads = pd.merge(reads, news, left_on="history", right_index=True)
+        reads = reads.drop(columns=["history"])
+        reads = reads.reset_index()
 
-            reads = users.explode("history").dropna()
-            reads = pd.merge(reads, news, left_on="history", right_index=True)
-            reads = reads.drop(columns=["history"])
-            reads = reads.reset_index()
+        # Topic name to ordinal number
+        self.topic_encoder = LabelEncoder()
+        self.topics = self.topic_encoder.fit_transform(reads["subcategory"].values)
 
-            # Topic name to ordinal number
-            self.topic_encoder = LabelEncoder()
-            self.topics = self.topic_encoder.fit_transform(reads["subcategory"].values)
-
-            # User ID to ordinal number
-            self.user_encoder = LabelEncoder()
-            self.contexts = self.user_encoder.fit_transform(reads["user"].values)
-
-            # Save preprocessed data
-            with open(prepared_path, "wb") as f:
-                pickle.dump(
-                    (
-                        self.topic_encoder,
-                        self.topics,
-                        self.user_encoder,
-                        self.contexts,
-                        self.all_topics,
-                    ),
-                    f,
-                )
+        # User ID to ordinal number
+        self.user_encoder = LabelEncoder()
+        self.contexts = self.user_encoder.fit_transform(reads["user"].values)
 
     @property
     def number_of_topics(self) -> int:
