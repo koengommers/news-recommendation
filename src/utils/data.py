@@ -1,5 +1,6 @@
 import os
 import zipfile
+from typing import Optional
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -14,7 +15,9 @@ SPLITS = {
 DEFAULT_DATA_DIR = "./data"
 
 
-def _get_mind_path(variant, split=None, data_dir=DEFAULT_DATA_DIR):
+def _get_mind_path(
+    variant: str, split: Optional[str] = None, data_dir: str = DEFAULT_DATA_DIR
+) -> str:
     path = os.path.join(data_dir, f"mind_{variant}")
 
     if split:
@@ -23,11 +26,13 @@ def _get_mind_path(variant, split=None, data_dir=DEFAULT_DATA_DIR):
     return path
 
 
-def _get_mind_file(variant, split, filename, data_dir=DEFAULT_DATA_DIR):
+def _get_mind_file(
+    variant: str, split: str, filename: str, data_dir: str = DEFAULT_DATA_DIR
+) -> str:
     return os.path.join(_get_mind_path(variant, split, data_dir), filename)
 
 
-def download_zip(name, url, target_dir):
+def download_zip(name: str, url: str, target_dir: str) -> None:
     os.makedirs(target_dir, exist_ok=True)
     filename = os.path.basename(urlparse(url).path)
     filepath = os.path.join(target_dir, filename)
@@ -51,7 +56,7 @@ def download_zip(name, url, target_dir):
     os.remove(filepath)
 
 
-def download_mind(variant="small", data_dir=DEFAULT_DATA_DIR):
+def download_mind(variant: str = "small", data_dir: str = DEFAULT_DATA_DIR) -> None:
     BASE_URL = "https://mind201910small.blob.core.windows.net/release"
 
     assert variant in SPLITS.keys()
@@ -62,7 +67,14 @@ def download_mind(variant="small", data_dir=DEFAULT_DATA_DIR):
         download_zip(filename, url, _get_mind_path(variant, split, data_dir))
 
 
-def _load_mind_data(filename, variant, splits, column_names, column_indices, data_dir=DEFAULT_DATA_DIR):
+def _load_mind_data(
+    filename: str,
+    variant: str,
+    splits: list[str],
+    column_names: list[str],
+    column_indices: list[int],
+    data_dir: str = DEFAULT_DATA_DIR,
+) -> pd.DataFrame:
     if not os.path.exists(_get_mind_path(variant, data_dir=data_dir)):
         download_mind(variant, data_dir)
 
@@ -79,7 +91,12 @@ def _load_mind_data(filename, variant, splits, column_names, column_indices, dat
     )
 
 
-def load_behaviors(variant="small", splits=None, columns=None, data_dir=DEFAULT_DATA_DIR):
+def load_behaviors(
+    variant: str = "small",
+    splits: Optional[list[str]] = None,
+    columns: Optional[list[str]] = None,
+    data_dir: str = DEFAULT_DATA_DIR,
+) -> pd.DataFrame:
     if splits is None:
         splits = SPLITS[variant]
 
@@ -96,7 +113,13 @@ def load_behaviors(variant="small", splits=None, columns=None, data_dir=DEFAULT_
     return behaviors
 
 
-def load_news(variant="small", splits=None, columns=None, drop_duplicates=True, data_dir=DEFAULT_DATA_DIR):
+def load_news(
+    variant: str = "small",
+    splits: Optional[list[str]] = None,
+    columns: Optional[list[str]] = None,
+    drop_duplicates: bool = True,
+    data_dir: str = DEFAULT_DATA_DIR,
+) -> pd.DataFrame:
     if splits is None:
         splits = SPLITS[variant]
 
@@ -117,7 +140,9 @@ def load_news(variant="small", splits=None, columns=None, drop_duplicates=True, 
     column_indices = sorted([available_columns.index(col) for col in columns])
     column_names = [available_columns[i] for i in column_indices]
 
-    news = _load_mind_data("news.tsv", variant, splits, column_names, column_indices, data_dir)
+    news = _load_mind_data(
+        "news.tsv", variant, splits, column_names, column_indices, data_dir
+    )
     if drop_duplicates:
         news = news.drop_duplicates(subset="id")
         assert news is not None
@@ -125,28 +150,34 @@ def load_news(variant="small", splits=None, columns=None, drop_duplicates=True, 
     return news
 
 
-def load_users(variant="small", splits=None, data_dir=DEFAULT_DATA_DIR):
+def load_users(
+    variant: str = "small",
+    splits: Optional[list[str]] = None,
+    data_dir: str = DEFAULT_DATA_DIR,
+) -> pd.DataFrame:
     behaviors = load_behaviors(variant, splits, data_dir=data_dir)
     users = convert_behaviors_to_users(behaviors)
     return users
 
 
-def _combine_history(histories):
+def _combine_history(histories: pd.Series) -> pd.Series:
     return histories[histories.apply(len).idxmax()]
 
 
-def convert_behaviors_to_users(behaviors):
+def convert_behaviors_to_users(behaviors: pd.DataFrame) -> pd.DataFrame:
     grouped = behaviors.groupby("user")
     users = grouped.agg({"history": _combine_history})
     return users
 
 
-def _download_glove(data_dir=DEFAULT_DATA_DIR):
+def _download_glove(data_dir: str = DEFAULT_DATA_DIR) -> None:
     url = "https://nlp.stanford.edu/data/glove.840B.300d.zip"
     download_zip("GloVe Embeddings", url, os.path.join(data_dir, "glove"))
 
 
-def load_pretrained_embeddings(token2int, data_dir=DEFAULT_DATA_DIR):
+def load_pretrained_embeddings(
+    token2int: dict[str, int], data_dir: str = DEFAULT_DATA_DIR
+) -> torch.Tensor:
     glove_path = os.path.join(data_dir, "glove", "glove.840B.300d.txt")
     if not os.path.exists(glove_path):
         _download_glove(data_dir)

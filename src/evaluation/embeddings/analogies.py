@@ -1,7 +1,9 @@
 from itertools import product
 
+import numpy as np
 from sklearn.metrics import top_k_accuracy_score
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.preprocessing import LabelEncoder
 
 from evaluation.metrics import mrr
 
@@ -20,11 +22,11 @@ TOPIC_GROUPS = [
 ]
 
 
-def evaluate_with_analogies(topic_encoder, embeddings):
-    def encode(topic):
-        return int(topic_encoder.transform([[topic]])[0][0])
+def evaluate_with_analogies(topic_encoder: LabelEncoder, embeddings: np.ndarray) -> dict[str, np.floating]:
+    def encode(topic: str) -> int:
+        return int(topic_encoder.transform([topic])[0])
 
-    def embed(topic):
+    def embed(topic: str) -> np.ndarray:
         encoded = encode(topic)
         return embeddings[encoded]
 

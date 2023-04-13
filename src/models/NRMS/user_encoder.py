@@ -6,7 +6,10 @@ from models.modules.attention.multihead_self import MultiHeadSelfAttention
 
 class UserEncoder(torch.nn.Module):
     def __init__(
-        self, word_embedding_dim, query_vector_dim=200, num_attention_heads=15
+        self,
+        word_embedding_dim: int,
+        query_vector_dim: int = 200,
+        num_attention_heads: int = 15,
     ):
         super(UserEncoder, self).__init__()
         self.multihead_self_attention = MultiHeadSelfAttention(
@@ -16,7 +19,7 @@ class UserEncoder(torch.nn.Module):
             query_vector_dim, word_embedding_dim
         )
 
-    def forward(self, user_vector):
+    def forward(self, user_vector: torch.Tensor) -> torch.Tensor:
         """
         Args:
             user_vector: batch_size, num_clicked_news_a_user, word_embedding_dim

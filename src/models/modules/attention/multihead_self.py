@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -6,11 +8,11 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class ScaledDotProductAttention(nn.Module):
-    def __init__(self, d_k):
+    def __init__(self, d_k: int):
         super(ScaledDotProductAttention, self).__init__()
         self.d_k = d_k
 
-    def forward(self, Q, K, V, attn_mask=None):
+    def forward(self, Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor, attn_mask: Optional[torch.Tensor]=None) -> tuple[torch.Tensor, torch.Tensor]:
         scores = torch.matmul(Q, K.transpose(-1, -2)) / np.sqrt(self.d_k)
         scores = torch.exp(scores)
         if attn_mask is not None:
@@ -22,7 +24,7 @@ class ScaledDotProductAttention(nn.Module):
 
 
 class MultiHeadSelfAttention(nn.Module):
-    def __init__(self, d_model, num_attention_heads):
+    def __init__(self, d_model: int, num_attention_heads: int):
         super(MultiHeadSelfAttention, self).__init__()
         self.d_model = d_model
         self.num_attention_heads = num_attention_heads
@@ -36,12 +38,18 @@ class MultiHeadSelfAttention(nn.Module):
 
         self._initialize_weights()
 
-    def _initialize_weights(self):
+    def _initialize_weights(self) -> None:
         for m in self.modules():
             if isinstance(m, nn.Linear):
                 nn.init.xavier_uniform_(m.weight, gain=1)
 
-    def forward(self, Q, K=None, V=None, length=None):
+    def forward(
+        self,
+        Q: torch.Tensor,
+        K: Optional[torch.Tensor] = None,
+        V: Optional[torch.Tensor] = None,
+        length: Optional[torch.Tensor] = None,
+    ) -> torch.Tensor:
         if K is None:
             K = Q
         if V is None:

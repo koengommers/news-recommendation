@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Union
 import hydra
 from omegaconf import DictConfig
 from enum import Enum
@@ -33,7 +34,7 @@ class Architecture(str, Enum):
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="train_recommender")
-def main(cfg: DictConfig):
+def main(cfg: DictConfig) -> None:
     # Set up tokenizer
     if cfg.model.architecture in [Architecture.BERT_NRMS, Architecture.MINER]:
         tokenizer = AutoTokenizer.from_pretrained(cfg.model.pretrained_model_name)
@@ -72,6 +73,7 @@ def main(cfg: DictConfig):
     )
 
     # Init model
+    model: Union[NRMS, TANR, BERT_NRMS, MINER]
     if cfg.model.architecture == Architecture.NRMS:
         pretrained_embeddings = (
             load_pretrained_embeddings(tokenizer.t2i)
@@ -99,6 +101,8 @@ def main(cfg: DictConfig):
         model = BERT_NRMS(cfg.model.pretrained_model_name).to(device)
     elif cfg.model.architecture == Architecture.MINER:
         model = MINER(cfg.model.pretrained_model_name).to(device)
+    else:
+        raise ValueError("Unknown model architecture")
 
     # Init optimizer
     optimizer = torch.optim.Adam(model.parameters(), cfg.learning_rate)
@@ -162,6 +166,7 @@ def main(cfg: DictConfig):
             cfg.mind_variant,
             "dev",
         )
+        behaviors_dataloader = DataLoader(behaviors_dataset, batch_size=1, collate_fn=lambda x: x[0])
 
         scoring_functions = {
             "AUC": roc_auc_score,
@@ -173,7 +178,7 @@ def main(cfg: DictConfig):
 
         with torch.no_grad():
             for history_ids, impression_ids, clicked in tqdm(
-                behaviors_dataset, desc="Evaluating logs", disable=cfg.tqdm_disable
+                behaviors_dataloader, desc="Evaluating logs", disable=cfg.tqdm_disable
             ):
                 if len(history_ids) == 0:
                     continue
@@ -183,9 +188,9 @@ def main(cfg: DictConfig):
                     dim=0
                 )
                 probs = model.get_prediction(impressions.to(device), user_vector)
-                probs = probs.tolist()
+                probs_list = probs.tolist()
                 for metric, scoring_fn in scoring_functions.items():
-                    all_scores[metric].append(scoring_fn(clicked, probs))
+                    all_scores[metric].append(scoring_fn(clicked, probs_list))
 
         tqdm.write(
             " | ".join(

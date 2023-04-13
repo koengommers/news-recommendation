@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 
@@ -13,10 +15,10 @@ class NRMS(nn.Module):
 
     def __init__(
         self,
-        num_words,
-        word_embedding_dim=300,
-        pretrained_embeddings=None,
-        freeze_pretrained_embeddings=False,
+        num_words: int,
+        word_embedding_dim: int = 300,
+        pretrained_embeddings: Optional[torch.Tensor] = None,
+        freeze_pretrained_embeddings: bool = False,
     ):
         super(NRMS, self).__init__()
         self.news_encoder = NewsEncoder(
@@ -29,23 +31,28 @@ class NRMS(nn.Module):
         self.loss_fn = nn.CrossEntropyLoss()
 
     @property
-    def device(self):
+    def device(self) -> torch.device:
         return next(self.parameters()).device
 
-    def forward(self, candidate_news, clicked_news, labels):
-        candidate_news = candidate_news["title"].to(self.device)
-        clicked_news = clicked_news["title"].to(self.device)
+    def forward(
+        self,
+        candidate_news: dict[str, torch.Tensor],
+        clicked_news: dict[str, torch.Tensor],
+        labels: torch.Tensor,
+    ) -> torch.Tensor:
+        candidate_news_titles = candidate_news["title"].to(self.device)
+        clicked_news_titles = clicked_news["title"].to(self.device)
 
-        batch_size, n_candidate_news, num_words = candidate_news.size()
+        batch_size, n_candidate_news, num_words = candidate_news_titles.size()
         # batch_size, 1 + K, word_embedding_dim
         candidate_news_vector = self.news_encoder(
-            candidate_news.reshape(-1, num_words)
+            candidate_news_titles.reshape(-1, num_words)
         ).reshape(batch_size, n_candidate_news, -1)
 
-        batch_size, history_length, num_words = clicked_news.size()
+        batch_size, history_length, num_words = clicked_news_titles.size()
         # batch_size, num_clicked_news_a_user, word_embedding_dim
         clicked_news_vector = self.news_encoder(
-            clicked_news.reshape(-1, num_words)
+            clicked_news_titles.reshape(-1, num_words)
         ).reshape(batch_size, history_length, -1)
 
         # batch_size, word_embedding_dim
@@ -58,7 +65,7 @@ class NRMS(nn.Module):
 
         return self.loss_fn(click_probability, labels)
 
-    def get_news_vector(self, news):
+    def get_news_vector(self, news: dict[str, torch.Tensor]) -> torch.Tensor:
         """
         Args:
             news:
@@ -71,7 +78,7 @@ class NRMS(nn.Module):
         # batch_size, word_embedding_dim
         return self.news_encoder(news["title"].to(self.device))
 
-    def get_user_vector(self, clicked_news_vector):
+    def get_user_vector(self, clicked_news_vector: torch.Tensor) -> torch.Tensor:
         """
         Args:
             clicked_news_vector: batch_size, num_clicked_news_a_user, word_embedding_dim
@@ -81,7 +88,7 @@ class NRMS(nn.Module):
         # batch_size, word_embedding_dim
         return self.user_encoder(clicked_news_vector.to(self.device))
 
-    def get_prediction(self, news_vector, user_vector):
+    def get_prediction(self, news_vector: torch.Tensor, user_vector: torch.Tensor) -> torch.Tensor:
         """
         Args:
             news_vector: candidate_size, word_embedding_dim

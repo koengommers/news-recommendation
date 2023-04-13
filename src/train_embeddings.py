@@ -1,4 +1,6 @@
 import pickle
+import numpy as np
+from typing import Union
 
 import hydra
 import torch
@@ -16,7 +18,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="train_embeddings")
-def main(cfg: DictConfig):
+def main(cfg: DictConfig) -> None:
     dataset = TopicReadsDataset(variant=cfg.mind_variant)
     dataloader = DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True)
 
@@ -72,7 +74,7 @@ def main(cfg: DictConfig):
 
         embeddings = next(model.target_embeddings.parameters()).cpu().data.numpy()
         metrics = evaluate_embeddings(embeddings, dataset)
-        metrics["Train loss"] = total_train_loss / len(dataloader)
+        metrics["Train loss"] = np.floating(total_train_loss / len(dataloader))
         metrics_string = " | ".join(
             [f"{key}: {value:.5f}" for key, value in metrics.items()]
         )

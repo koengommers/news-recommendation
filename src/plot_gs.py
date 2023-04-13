@@ -1,4 +1,6 @@
+# type: ignore
 import pickle
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,11 +19,11 @@ def compute_gs_score(embeddings_of_history):
     return np.mean(cosine_similarities)
 
 
-def get_embeddings_by_ids(ids, news):
+def get_embeddings_by_ids(ids, news: pd.DataFrame):
     return np.array(news["embedding"][ids].values)
 
 
-def compute_gs_scores(users, news):
+def compute_gs_scores(users: pd.DataFrame, news: pd.DataFrame) -> pd.DataFrame:
     users["gs"] = (
         users["history"]
         .apply(lambda history: get_embeddings_by_ids(history, news))
@@ -30,11 +32,11 @@ def compute_gs_scores(users, news):
     return users
 
 
-def add_news_embeddings(news, embeddings_file):
+def add_news_embeddings(news: pd.DataFrame, embeddings_file: str) -> pd.DataFrame:
     with open(embeddings_file, "rb") as f:
         embeddings, topic_encoder = pickle.load(f)
 
-    def encode(x):
+    def encode(x: str) -> Optional[int]:
         try:
             return topic_encoder.transform([[x]])[0][0]
         except:
@@ -49,7 +51,7 @@ def add_news_embeddings(news, embeddings_file):
     return news
 
 
-def plot_gs(users):
+def plot_gs(users: pd.DataFrame) -> None:
     users = users[users["history_length"] > 5]
     users["percentile"] = pd.qcut(
         users.history_length, np.linspace(0, 1, 11), labels=np.linspace(0.1, 1, 10)
@@ -61,7 +63,7 @@ def plot_gs(users):
     plt.show()
 
 
-def main(embeddings_file: str, mind_variant: str = "small"):
+def main(embeddings_file: str, mind_variant: str = "small") -> None:
     print("Loading users...")
     users = load_users(mind_variant)
 

@@ -2,13 +2,13 @@ import os
 import pickle
 
 import pandas as pd
-from sklearn import preprocessing
+from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import Dataset
 
-from utils.data import download_mind, load_news, load_users
+from utils.data import load_news, load_users
 
 
-def news_to_topics(news):
+def news_to_topics(news: pd.DataFrame) -> pd.DataFrame:
     categories = news[["category", "subcategory"]]
     categories = categories.drop_duplicates()
     assert categories is not None
@@ -17,7 +17,7 @@ def news_to_topics(news):
 
 
 class TopicReadsDataset(Dataset):
-    def __init__(self, variant="small", data_dir="./data"):
+    def __init__(self, variant: str = "small", data_dir: str = "./data"):
         prepared_dir = os.path.join(data_dir, "prepared")
         prepared_path = os.path.join(
             prepared_dir,
@@ -36,7 +36,9 @@ class TopicReadsDataset(Dataset):
             os.makedirs(prepared_dir, exist_ok=True)
 
             users = load_users(variant, data_dir=data_dir)
-            news = load_news(variant, columns=["category", "subcategory"], data_dir=data_dir)
+            news = load_news(
+                variant, columns=["category", "subcategory"], data_dir=data_dir
+            )
             self.all_topics = news_to_topics(news)
 
             reads = users.explode("history").dropna()
@@ -45,15 +47,15 @@ class TopicReadsDataset(Dataset):
             reads = reads.reset_index()
 
             # Topic name to ordinal number
-            self.topic_encoder = preprocessing.OrdinalEncoder()
+            self.topic_encoder = LabelEncoder()
             self.topics = self.topic_encoder.fit_transform(
-                reads["subcategory"].values.reshape(-1, 1)
+                reads["subcategory"].values
             )
 
             # User ID to ordinal number
-            self.user_encoder = preprocessing.OrdinalEncoder()
+            self.user_encoder = LabelEncoder()
             self.contexts = self.user_encoder.fit_transform(
-                reads["user"].values.reshape(-1, 1)
+                reads["user"].values
             )
 
             # Save preprocessed data
@@ -70,15 +72,15 @@ class TopicReadsDataset(Dataset):
                 )
 
     @property
-    def number_of_topics(self):
+    def number_of_topics(self) -> int:
         return len(self.topic_encoder.categories_[0])
 
     @property
-    def number_of_users(self):
+    def number_of_users(self) -> int:
         return len(self.user_encoder.categories_[0])
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.contexts)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> tuple[int, int]:
         return self.topics[idx], self.contexts[idx]
