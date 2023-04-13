@@ -1,11 +1,11 @@
 from collections import defaultdict
-from typing import Union
-import hydra
-from omegaconf import DictConfig
 from enum import Enum
+from typing import Union
 
+import hydra
 import numpy as np
 import torch
+from omegaconf import DictConfig
 from sklearn.metrics import roc_auc_score
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -149,14 +149,18 @@ def main(cfg: DictConfig) -> None:
             news_features,
         )
         news_dataloader = DataLoader(
-            news_dataset, batch_size=cfg.batch_size, collate_fn=collate_fn, drop_last=False
+            news_dataset,
+            batch_size=cfg.batch_size,
+            collate_fn=collate_fn,
+            drop_last=False,
         )
         news_vectors = {}
 
         with torch.no_grad():
             for news_ids, batched_news_features in tqdm(
-                news_dataloader, desc="Encoding news for evaluation",
-                disable=cfg.tqdm_disable
+                news_dataloader,
+                desc="Encoding news for evaluation",
+                disable=cfg.tqdm_disable,
             ):
                 output = model.get_news_vector(batched_news_features)
                 output = output.to(torch.device("cpu"))
@@ -166,7 +170,9 @@ def main(cfg: DictConfig) -> None:
             cfg.mind_variant,
             "dev",
         )
-        behaviors_dataloader = DataLoader(behaviors_dataset, batch_size=1, collate_fn=lambda x: x[0])
+        behaviors_dataloader = DataLoader(
+            behaviors_dataset, batch_size=1, collate_fn=lambda x: x[0]
+        )
 
         scoring_functions = {
             "AUC": roc_auc_score,
@@ -194,8 +200,20 @@ def main(cfg: DictConfig) -> None:
 
         tqdm.write(
             " | ".join(
-                f"{metric}: {np.mean(scores):.5f}" for metric, scores in all_scores.items()
+                f"{metric}: {np.mean(scores):.5f}"
+                for metric, scores in all_scores.items()
             )
+        )
+
+        # Save model
+        torch.save(
+            {
+                "model_state_dict": model.state_dict(),
+                "metrics": {
+                    metric: np.mean(scores) for metric, scores in all_scores.items()
+                },
+            },
+            f"checkpoint_{cfg.model.architecture}_{epoch_num}.pt",
         )
 
 
