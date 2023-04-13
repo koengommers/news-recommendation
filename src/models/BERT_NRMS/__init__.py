@@ -52,7 +52,7 @@ class BERT_NRMS(nn.Module):
                 clicked_news_titles[key].reshape(-1, num_words).to(self.device)
             )
 
-        clicked_news_vector = self.news_encoder(clicked_news).reshape(
+        clicked_news_vector = self.news_encoder(clicked_news_titles).reshape(
             batch_size, history_length, -1
         )
 
@@ -69,7 +69,7 @@ class BERT_NRMS(nn.Module):
         titles = news["title"]
         for key in titles:
             titles[key] = titles[key].to(self.device)
-        return self.news_encoder(news)
+        return self.news_encoder(titles)
 
     def get_user_vector(self, clicked_news_vector: torch.Tensor) -> torch.Tensor:
         return self.user_encoder(clicked_news_vector.to(self.device))
