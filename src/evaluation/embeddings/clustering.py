@@ -17,7 +17,7 @@ def evaluate_with_clustering(
 
     true_labels = [
         get_main_category(categories, subcategory)
-        for subcategory in dataset.topic_encoder.categories_[0]
+        for subcategory in dataset.topic_encoder.classes_
     ]
     n_clusters = len(set(true_labels))
 

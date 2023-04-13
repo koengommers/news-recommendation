@@ -55,7 +55,7 @@ def main(cfg: DictConfig) -> None:
             current_batch_size = target.size(0)
 
             target = target.to(torch.long).to(device)
-            context_positive = context_positive.to(torch.long)
+            context_positive = context_positive.to(torch.long).unsqueeze(1)
             context_negative = torch.randint(
                 dataset.number_of_users, (current_batch_size, cfg.n_negative_samples)
             )
@@ -66,7 +66,7 @@ def main(cfg: DictConfig) -> None:
             y = torch.cat([y_pos, y_neg], dim=1).to(device)
 
             model.zero_grad()
-            probs = model(target.squeeze(1), context)
+            probs = model(target, context)
             loss = loss_function(probs, y)
             total_train_loss += loss.item()
             loss.backward()

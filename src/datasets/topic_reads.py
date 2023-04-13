@@ -48,15 +48,11 @@ class TopicReadsDataset(Dataset):
 
             # Topic name to ordinal number
             self.topic_encoder = LabelEncoder()
-            self.topics = self.topic_encoder.fit_transform(
-                reads["subcategory"].values
-            )
+            self.topics = self.topic_encoder.fit_transform(reads["subcategory"].values)
 
             # User ID to ordinal number
             self.user_encoder = LabelEncoder()
-            self.contexts = self.user_encoder.fit_transform(
-                reads["user"].values
-            )
+            self.contexts = self.user_encoder.fit_transform(reads["user"].values)
 
             # Save preprocessed data
             with open(prepared_path, "wb") as f:
@@ -73,11 +69,11 @@ class TopicReadsDataset(Dataset):
 
     @property
     def number_of_topics(self) -> int:
-        return len(self.topic_encoder.categories_[0])
+        return len(self.topic_encoder.classes_)
 
     @property
     def number_of_users(self) -> int:
-        return len(self.user_encoder.categories_[0])
+        return len(self.user_encoder.classes_)
 
     def __len__(self) -> int:
         return len(self.contexts)
