@@ -16,9 +16,9 @@ class BERT_NRMS(nn.Module):
         self, pretrained_model_name: str, bert_pooling_method: str = "attention"
     ):
         super(BERT_NRMS, self).__init__()
-        bert_config = AutoConfig.from_pretrained(pretrained_model_name)
-        self.news_encoder = NewsEncoder(bert_config, bert_pooling_method)
-        self.user_encoder = UserEncoder(bert_config.hidden_size, num_attention_heads=16)
+        self.bert_config = AutoConfig.from_pretrained(pretrained_model_name)
+        self.news_encoder = NewsEncoder(self.bert_config, bert_pooling_method)
+        self.user_encoder = UserEncoder(self.bert_config.hidden_size, num_attention_heads=16)
         self.loss_fn = nn.CrossEntropyLoss()
 
     @property

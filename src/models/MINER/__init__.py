@@ -56,17 +56,17 @@ class MINER(nn.Module):
         self.aggregate_method = aggregate_method
         self.disagreement_loss_weight = disagreement_loss_weight
 
-        bert_config = AutoConfig.from_pretrained(pretrained_model_name)
+        self.bert_config = AutoConfig.from_pretrained(pretrained_model_name)
         self.news_encoder = NewsEncoder(
-            bert_config, bert_pooling_method, finetune_n_last_layers=-1
+            self.bert_config, bert_pooling_method, finetune_n_last_layers=-1
         )
         self.user_encoder = UserEncoder(
-            n_interest_vectors, word_embedding_dim=bert_config.hidden_size
+            n_interest_vectors, word_embedding_dim=self.bert_config.hidden_size
         )
         self.loss_fn = nn.CrossEntropyLoss()
 
         if aggregate_method == "weighted":
-            self.score_aggregator = TargetAwareAttention(bert_config.hidden_size)
+            self.score_aggregator = TargetAwareAttention(self.bert_config.hidden_size)
 
     @property
     def device(self) -> torch.device:
