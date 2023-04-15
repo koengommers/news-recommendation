@@ -10,12 +10,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Install poetry
         run: pipx install poetry
 
-      - uses: actions/setup-python@v4
+      - name: Setup python
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9
           cache: 'poetry'
-      - run: poetry install --no-interaction
-      - run: poetry run mypy src/
+
+      - name: Install dependencies
+        run: poetry install --no-interaction
+        
+      - name: Validate pyproject.toml
+        run: poetry check
+        
+      - name: Run mypy
+        run: poetry run mypy src/
