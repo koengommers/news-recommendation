@@ -28,3 +28,6 @@ jobs:
         
       - name: Run mypy
         run: poetry run mypy src/
+        
+      - name: Run tests
+        run: poetry run pytest
