@@ -23,6 +23,7 @@ mypy = "^1.2.0"
 types-requests = "^2.28.11"
 pandas-stubs = "^1.5.3"
 types-tqdm = "^4.65.0"
+pytest = "^7.3.0"
 
 [tool.mypy]
 disallow_untyped_defs = true
@@ -33,6 +34,10 @@ ignore_missing_imports = true
 # disallow_any_expr = true
 # disallow_any_decorated = true
 # disallow_any_explicit = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
