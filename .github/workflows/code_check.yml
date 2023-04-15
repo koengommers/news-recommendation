@@ -1,0 +1,21 @@
+name: Code check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  code_check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+          cache: 'poetry'
+      - run: poetry install --no-interaction
+      - run: poetry run mypy src/
