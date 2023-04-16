@@ -189,11 +189,13 @@ def main(cfg: DictConfig) -> None:
                 if len(history_ids) == 0:
                     continue
                 history = torch.stack([news_vectors[id] for id in history_ids])
-                impressions = torch.stack([news_vectors[id] for id in impression_ids])
-                user_vector = model.get_user_vector(history.unsqueeze(dim=0)).squeeze(
-                    dim=0
-                )
-                probs = model.get_prediction(impressions.to(device), user_vector)
+                impressions = torch.stack(
+                    [news_vectors[id] for id in impression_ids]
+                ).unsqueeze(0)
+                user_vector = model.get_user_vector(history.unsqueeze(0))
+                probs = model.get_prediction(
+                    impressions.to(device), user_vector
+                ).squeeze(0)
                 probs_list = probs.tolist()
                 for metric, scoring_fn in scoring_functions.items():
                     all_scores[metric].append(scoring_fn(clicked, probs_list))

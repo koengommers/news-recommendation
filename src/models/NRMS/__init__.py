@@ -40,28 +40,25 @@ class NRMS(nn.Module):
         clicked_news: dict[str, torch.Tensor],
         labels: torch.Tensor,
     ) -> torch.Tensor:
-        candidate_news_titles = candidate_news["title"].to(self.device)
-        clicked_news_titles = clicked_news["title"].to(self.device)
-
-        batch_size, n_candidate_news, num_words = candidate_news_titles.size()
+        batch_size, n_candidate_news, num_words = candidate_news["title"].size()
+        candidate_news["title"] = candidate_news["title"].reshape(-1, num_words)
         # batch_size, 1 + K, word_embedding_dim
-        candidate_news_vector = self.news_encoder(
-            candidate_news_titles.reshape(-1, num_words)
-        ).reshape(batch_size, n_candidate_news, -1)
+        candidate_news_vector = self.get_news_vector(candidate_news).reshape(
+            batch_size, n_candidate_news, -1
+        )
 
-        batch_size, history_length, num_words = clicked_news_titles.size()
+        batch_size, history_length, num_words = clicked_news["title"].size()
+        clicked_news["title"] = clicked_news["title"].reshape(-1, num_words)
         # batch_size, num_clicked_news_a_user, word_embedding_dim
-        clicked_news_vector = self.news_encoder(
-            clicked_news_titles.reshape(-1, num_words)
-        ).reshape(batch_size, history_length, -1)
+        clicked_news_vector = self.get_news_vector(clicked_news).reshape(
+            batch_size, history_length, -1
+        )
 
         # batch_size, word_embedding_dim
-        user_vector = self.user_encoder(clicked_news_vector)
+        user_vector = self.get_user_vector(clicked_news_vector)
 
         # batch_size, 1 + K
-        click_probability = torch.bmm(
-            candidate_news_vector, user_vector.unsqueeze(dim=-1)
-        ).squeeze(dim=-1)
+        click_probability = self.get_prediction(candidate_news_vector, user_vector)
 
         return self.loss_fn(click_probability, labels)
 
@@ -88,20 +85,17 @@ class NRMS(nn.Module):
         # batch_size, word_embedding_dim
         return self.user_encoder(clicked_news_vector.to(self.device))
 
-    def get_prediction(self, news_vector: torch.Tensor, user_vector: torch.Tensor) -> torch.Tensor:
+    def get_prediction(
+        self, news_vector: torch.Tensor, user_vector: torch.Tensor
+    ) -> torch.Tensor:
         """
         Args:
-            news_vector: candidate_size, word_embedding_dim
-            user_vector: word_embedding_dim
+            news_vector: batch_size, candidate_size, word_embedding_dim
+            user_vector: batch_size, word_embedding_dim
         Returns:
-            click_probability: candidate_size
+            click_probability: batch_size, candidate_size
         """
-        # candidate_size
-        news_vector = news_vector.unsqueeze(0)
-        user_vector = user_vector.unsqueeze(0)
-        probability = (
-            torch.bmm(news_vector, user_vector.unsqueeze(dim=-1))
-            .squeeze(dim=-1)
-            .squeeze(dim=0)
+        probability = torch.bmm(news_vector, user_vector.unsqueeze(dim=-1)).squeeze(
+            dim=-1
         )
         return probability

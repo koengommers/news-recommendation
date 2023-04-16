@@ -71,28 +71,24 @@ class TANR(torch.nn.Module):
             click_probability: batch_size, 1 + K
             topic_classification_loss: 0-dim tensor
         """
-        device = next(self.parameters()).device
-        candidate_news_titles = candidate_news["title"].to(device)
-        clicked_news_titles = clicked_news["title"].to(device)
-
-        batch_size, n_candidate_news, num_words = candidate_news_titles.size()
+        batch_size, n_candidate_news, num_words = candidate_news["title"].size()
+        candidate_news["title"] = candidate_news["title"].reshape(-1, num_words)
         # batch_size, 1 + K, word_embedding_dim
-        candidate_news_vector = self.news_encoder(
-            candidate_news_titles.reshape(-1, num_words)
-        ).reshape(batch_size, n_candidate_news, -1)
+        candidate_news_vector = self.get_news_vector(candidate_news).reshape(
+            batch_size, n_candidate_news, -1
+        )
 
-        batch_size, history_length, num_words = clicked_news_titles.size()
+        batch_size, history_length, num_words = clicked_news["title"].size()
+        clicked_news["title"] = clicked_news["title"].reshape(-1, num_words)
         # batch_size, num_clicked_news_a_user, word_embedding_dim
-        clicked_news_vector = self.news_encoder(
-            clicked_news_titles.reshape(-1, num_words)
-        ).reshape(batch_size, history_length, -1)
+        clicked_news_vector = self.get_news_vector(clicked_news).reshape(
+            batch_size, history_length, -1
+        )
 
         # batch_size, num_filters
         user_vector = self.user_encoder(clicked_news_vector)
         # batch_size, 1 + K
-        click_probability = torch.bmm(
-            candidate_news_vector, user_vector.unsqueeze(dim=-1)
-        ).squeeze(dim=-1)
+        click_probability = self.get_prediction(candidate_news_vector, user_vector)
 
         # batch_size * (1 + K + num_clicked_news_a_user), num_categories
         y_pred = self.topic_predictor(
@@ -108,8 +104,8 @@ class TANR(torch.nn.Module):
                     clicked_news["category"].reshape(-1),
                 )
             )
-        ).to(device)
-        class_weight = torch.ones(self.num_categories).to(device)
+        ).to(self.device)
+        class_weight = torch.ones(self.num_categories).to(self.device)
         class_weight[0] = 0
         criterion = nn.CrossEntropyLoss(weight=class_weight)
         topic_classification_loss = criterion(y_pred, y)
@@ -149,17 +145,12 @@ class TANR(torch.nn.Module):
     ) -> torch.Tensor:
         """
         Args:
-            news_vector: candidate_size, word_embedding_dim
-            user_vector: word_embedding_dim
+            news_vector: batch_size, candidate_size, word_embedding_dim
+            user_vector: batch_size, word_embedding_dim
         Returns:
-            click_probability: candidate_size
+            click_probability: batch_size, candidate_size
         """
-        # candidate_size
-        news_vector = news_vector.unsqueeze(0)
-        user_vector = user_vector.unsqueeze(0)
-        probability = (
-            torch.bmm(news_vector, user_vector.unsqueeze(dim=-1))
-            .squeeze(dim=-1)
-            .squeeze(dim=0)
+        probability = torch.bmm(news_vector, user_vector.unsqueeze(dim=-1)).squeeze(
+            dim=-1
         )
         return probability

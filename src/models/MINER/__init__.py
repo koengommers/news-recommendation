@@ -78,33 +78,34 @@ class MINER(nn.Module):
         clicked_news: dict[str, dict[str, torch.Tensor]],
         labels: torch.Tensor,
     ) -> torch.Tensor:
-        candidate_news_titles = candidate_news["title"]
-        clicked_news_titles = clicked_news["title"]
-
-        batch_size, n_candidate_news, num_words = candidate_news_titles[
+        batch_size, n_candidate_news, num_words = candidate_news["title"][
             "input_ids"
         ].size()
-        for key in candidate_news_titles:
-            candidate_news_titles[key] = (
-                candidate_news_titles[key].reshape(-1, num_words).to(self.device)
+        for key in candidate_news["title"]:
+            candidate_news["title"][key] = candidate_news["title"][key].reshape(
+                -1, num_words
             )
-        # batch_size, n_candidates, hidden_size
-        candidate_news_vector = self.news_encoder(candidate_news_titles).reshape(
+
+        # batch_size, 1 + K, hidden_size
+        candidate_news_vector = self.get_news_vector(candidate_news).reshape(
             batch_size, n_candidate_news, -1
         )
 
-        batch_size, history_length, num_words = clicked_news_titles["input_ids"].size()
-        for key in clicked_news_titles:
-            clicked_news_titles[key] = (
-                clicked_news_titles[key].reshape(-1, num_words).to(self.device)
+        # batch_size, num_clicked_news_a_user, hidden_size
+        batch_size, history_length, num_words = clicked_news["title"][
+            "input_ids"
+        ].size()
+        for key in clicked_news["title"]:
+            clicked_news["title"][key] = clicked_news["title"][key].reshape(
+                -1, num_words
             )
-        # batch_size, history_length, hidden_size
-        clicked_news_vector = self.news_encoder(clicked_news_titles).reshape(
+
+        clicked_news_vector = self.get_news_vector(clicked_news).reshape(
             batch_size, history_length, -1
         )
 
         # batch_size, n_interest_vectors, hidden_size
-        user_vectors = self.user_encoder(clicked_news_vector)
+        user_vectors = self.get_user_vector(clicked_news_vector)
 
         dot_products = torch.bmm(user_vectors, user_vectors.transpose(1, 2))
         norms = torch.norm(user_vectors, p=2, dim=-1, keepdim=True)
@@ -112,19 +113,7 @@ class MINER(nn.Module):
         disagreement_loss = cos_similarities.mean()
 
         # batch_size, 1 + K, n_interest_vectors
-        matching_scores = torch.bmm(candidate_news_vector, user_vectors.transpose(1, 2))
-
-        # batch_size, 1 + K
-        if self.aggregate_method == "max":
-            click_probability = torch.max(matching_scores, dim=2)[0]
-        elif self.aggregate_method == "average":
-            click_probability = torch.mean(matching_scores, dim=2)
-        elif self.aggregate_method == "weighted":
-            click_probability = self.score_aggregator(
-                user_vectors, candidate_news_vector, matching_scores
-            )
-        else:
-            raise ValueError("Unknown aggregate method")
+        click_probability = self.get_prediction(candidate_news_vector, user_vectors)
 
         newsrec_loss = self.loss_fn(click_probability, labels)
         loss = newsrec_loss + self.disagreement_loss_weight * disagreement_loss
@@ -145,25 +134,23 @@ class MINER(nn.Module):
     ) -> torch.Tensor:
         """
         Args:
-            news_vector: candidate_size, word_embedding_dim
-            user_vector: word_embedding_dim
+            news_vector: batch_size, candidate_size, hidden_size
+            user_vector: batch_size, hidden_size
         Returns:
-            click_probability: candidate_size
+            click_probability: batch_size, candidate_size
         """
-        # candidate_size
-        news_vector = news_vector.unsqueeze(0)
-        user_vectors = user_vectors.unsqueeze(0)
+        # batch_size, 1 + K, n_interest_vectors
         matching_scores = torch.bmm(news_vector, user_vectors.transpose(1, 2))
 
         # batch_size, 1 + K
         if self.aggregate_method == "max":
-            click_probability = torch.max(matching_scores, dim=2)[0].squeeze(0)
+            click_probability = torch.max(matching_scores, dim=2)[0]
         elif self.aggregate_method == "average":
-            click_probability = torch.mean(matching_scores, dim=2).squeeze(0)
+            click_probability = torch.mean(matching_scores, dim=2)
         elif self.aggregate_method == "weighted":
             click_probability = self.score_aggregator(
                 user_vectors, news_vector, matching_scores
-            ).squeeze(0)
+            )
         else:
             raise ValueError("Unknown aggregate method")
 

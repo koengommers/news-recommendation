@@ -43,16 +43,17 @@ def test_user_encoding():
 def test_predicting():
     NUM_WORDS = 1000
     WORD_EMBEDDING_DIM = 300
+    BATCH_SIZE = 16
     N_CANDIDATE_NEWS = 5
 
     model = NRMS(NUM_WORDS, WORD_EMBEDDING_DIM)
 
-    news_vector = torch.rand((N_CANDIDATE_NEWS, WORD_EMBEDDING_DIM))
-    user_vector = torch.rand((WORD_EMBEDDING_DIM,))
+    news_vector = torch.rand((BATCH_SIZE, N_CANDIDATE_NEWS, WORD_EMBEDDING_DIM))
+    user_vector = torch.rand((BATCH_SIZE, WORD_EMBEDDING_DIM,))
 
     prediction = model.get_prediction(news_vector, user_vector)
     assert isinstance(prediction, torch.Tensor)
-    assert prediction.shape == (N_CANDIDATE_NEWS,)
+    assert prediction.shape == (BATCH_SIZE, N_CANDIDATE_NEWS)
 
 
 def test_forward_pass():

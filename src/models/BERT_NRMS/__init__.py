@@ -18,7 +18,9 @@ class BERT_NRMS(nn.Module):
         super(BERT_NRMS, self).__init__()
         self.bert_config = AutoConfig.from_pretrained(pretrained_model_name)
         self.news_encoder = NewsEncoder(self.bert_config, bert_pooling_method)
-        self.user_encoder = UserEncoder(self.bert_config.hidden_size, num_attention_heads=16)
+        self.user_encoder = UserEncoder(
+            self.bert_config.hidden_size, num_attention_heads=16
+        )
         self.loss_fn = nn.CrossEntropyLoss()
 
     @property
@@ -31,38 +33,37 @@ class BERT_NRMS(nn.Module):
         clicked_news: dict[str, dict[str, torch.Tensor]],
         labels: torch.Tensor,
     ) -> torch.Tensor:
-        candidate_news_titles = candidate_news["title"]
-        clicked_news_titles = clicked_news["title"]
-
-        batch_size, n_candidate_news, num_words = candidate_news_titles[
+        batch_size, n_candidate_news, num_words = candidate_news["title"][
             "input_ids"
         ].size()
-        for key in candidate_news_titles:
-            candidate_news_titles[key] = (
-                candidate_news_titles[key].reshape(-1, num_words).to(self.device)
+        for key in candidate_news["title"]:
+            candidate_news["title"][key] = candidate_news["title"][key].reshape(
+                -1, num_words
             )
 
-        candidate_news_vector = self.news_encoder(candidate_news_titles).reshape(
+        # batch_size, 1 + K, hidden_size
+        candidate_news_vector = self.get_news_vector(candidate_news).reshape(
             batch_size, n_candidate_news, -1
         )
 
-        batch_size, history_length, num_words = clicked_news_titles["input_ids"].size()
-        for key in clicked_news_titles:
-            clicked_news_titles[key] = (
-                clicked_news_titles[key].reshape(-1, num_words).to(self.device)
+        # batch_size, num_clicked_news_a_user, hidden_size
+        batch_size, history_length, num_words = clicked_news["title"][
+            "input_ids"
+        ].size()
+        for key in clicked_news["title"]:
+            clicked_news["title"][key] = clicked_news["title"][key].reshape(
+                -1, num_words
             )
 
-        clicked_news_vector = self.news_encoder(clicked_news_titles).reshape(
+        clicked_news_vector = self.get_news_vector(clicked_news).reshape(
             batch_size, history_length, -1
         )
 
         # batch_size, hidden_size
-        user_vector = self.user_encoder(clicked_news_vector)
+        user_vector = self.get_user_vector(clicked_news_vector)
 
         # batch_size, 1 + K
-        click_probability = torch.bmm(
-            candidate_news_vector, user_vector.unsqueeze(dim=-1)
-        ).squeeze(dim=-1)
+        click_probability = self.get_prediction(candidate_news_vector, user_vector)
         return self.loss_fn(click_probability, labels)
 
     def get_news_vector(self, news: dict[str, dict[str, torch.Tensor]]) -> torch.Tensor:
@@ -77,11 +78,14 @@ class BERT_NRMS(nn.Module):
     def get_prediction(
         self, news_vector: torch.Tensor, user_vector: torch.Tensor
     ) -> torch.Tensor:
-        news_vector = news_vector.unsqueeze(0)
-        user_vector = user_vector.unsqueeze(0)
-        probability = (
-            torch.bmm(news_vector, user_vector.unsqueeze(dim=-1))
-            .squeeze(dim=-1)
-            .squeeze(dim=0)
+        """
+        Args:
+            news_vector: batch_size, candidate_size, word_embedding_dim
+            user_vector: batch_size, word_embedding_dim
+        Returns:
+            click_probability: batch_size, candidate_size
+        """
+        probability = torch.bmm(news_vector, user_vector.unsqueeze(dim=-1)).squeeze(
+            dim=-1
         )
         return probability

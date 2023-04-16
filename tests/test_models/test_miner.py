@@ -51,17 +51,18 @@ def test_user_encoding():
 
 
 def test_predicting():
+    BATCH_SIZE = 4
     N_CANDIDATE_NEWS = 5
     N_INTEREST_VECTORS = 32
 
     model = MINER("bert-base-uncased", N_INTEREST_VECTORS)
 
-    news_vector = torch.rand((N_CANDIDATE_NEWS, model.bert_config.hidden_size))
-    user_vectors = torch.rand((N_INTEREST_VECTORS, model.bert_config.hidden_size))
+    news_vector = torch.rand((BATCH_SIZE, N_CANDIDATE_NEWS, model.bert_config.hidden_size))
+    user_vectors = torch.rand((BATCH_SIZE, N_INTEREST_VECTORS, model.bert_config.hidden_size))
 
     prediction = model.get_prediction(news_vector, user_vectors)
     assert isinstance(prediction, torch.Tensor)
-    assert prediction.shape == (N_CANDIDATE_NEWS,)
+    assert prediction.shape == (BATCH_SIZE, N_CANDIDATE_NEWS)
 
 
 def test_forward_pass():
