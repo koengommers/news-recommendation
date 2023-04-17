@@ -1,5 +1,7 @@
-import torch.nn as nn
+from typing import Optional
+
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 from transformers import AutoModel, PretrainedConfig
 
@@ -13,10 +15,13 @@ class NewsEncoder(nn.Module):
         pooling_method: str = "attention",
         dropout_probability: float = 0.2,
         query_vector_dim: int = 200,
+        num_hidden_layers: Optional[int] = None,
         finetune_n_last_layers: int = 2,
     ):
         super(NewsEncoder, self).__init__()
         self.dropout_probability = dropout_probability
+        if num_hidden_layers is not None:
+            bert_config.num_hidden_layers = num_hidden_layers
         self.bert_model = AutoModel.from_config(bert_config)
 
         assert pooling_method in ["attention", "average", "pooler"]

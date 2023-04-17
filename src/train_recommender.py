@@ -98,7 +98,7 @@ def main(cfg: DictConfig) -> None:
             freeze_pretrained_embeddings=cfg.model.freeze_pretrained_embeddings,
         ).to(device)
     elif cfg.model.architecture == Architecture.BERT_NRMS:
-        model = BERT_NRMS(cfg.model.pretrained_model_name).to(device)
+        model = BERT_NRMS(cfg.model.pretrained_model_name, num_hidden_layers=cfg.model.num_hidden_layers).to(device)
     elif cfg.model.architecture == Architecture.MINER:
         model = MINER(cfg.model.pretrained_model_name).to(device)
     else:
