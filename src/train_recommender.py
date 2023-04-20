@@ -1,20 +1,15 @@
-from collections import defaultdict
 from enum import Enum
 from typing import Union
 
 import hydra
-import numpy as np
 import torch
 from omegaconf import DictConfig
-from sklearn.metrics import roc_auc_score
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoTokenizer
 
-from datasets.behaviors import BehaviorsDataset
-from datasets.news import NewsDataset
 from datasets.recommender_training import RecommenderTrainingDataset
-from evaluation.metrics import mrr_score, ndcg_score
+from evaluation.recommender import evaluate
 from models.BERT_NRMS import BERT_NRMS
 from models.MINER import MINER
 from models.NRMS import NRMS
@@ -98,7 +93,10 @@ def main(cfg: DictConfig) -> None:
             freeze_pretrained_embeddings=cfg.model.freeze_pretrained_embeddings,
         ).to(device)
     elif cfg.model.architecture == Architecture.BERT_NRMS:
-        model = BERT_NRMS(cfg.model.pretrained_model_name, num_hidden_layers=cfg.model.num_hidden_layers).to(device)
+        model = BERT_NRMS(
+            cfg.model.pretrained_model_name,
+            num_hidden_layers=cfg.model.num_hidden_layers,
+        ).to(device)
     elif cfg.model.architecture == Architecture.MINER:
         model = MINER(cfg.model.pretrained_model_name).to(device)
     else:
@@ -135,85 +133,22 @@ def main(cfg: DictConfig) -> None:
         )
 
         # Evaluate
-        model.eval()
         if isinstance(tokenizer, NltkTokenizer):
             tokenizer.eval()
 
-        news_dataset = NewsDataset(
-            cfg.mind_variant,
-            "dev",
-            tokenize,
-            cfg.num_words_title,
-            cfg.num_words_abstract,
-            dataset.categorical_encoders,
-            news_features,
+        metrics = evaluate(
+            model, "dev", tokenize, dataset.categorical_encoders, news_features, cfg
         )
-        news_dataloader = DataLoader(
-            news_dataset,
-            batch_size=cfg.batch_size,
-            collate_fn=collate_fn,
-            drop_last=False,
-        )
-        news_vectors = {}
-
-        with torch.no_grad():
-            for news_ids, batched_news_features in tqdm(
-                news_dataloader,
-                desc="Encoding news for evaluation",
-                disable=cfg.tqdm_disable,
-            ):
-                output = model.get_news_vector(batched_news_features)
-                output = output.to(torch.device("cpu"))
-                news_vectors.update(dict(zip(news_ids, output)))
-
-        behaviors_dataset = BehaviorsDataset(
-            cfg.mind_variant,
-            "dev",
-        )
-        behaviors_dataloader = DataLoader(
-            behaviors_dataset, batch_size=1, collate_fn=lambda x: x[0]
-        )
-
-        scoring_functions = {
-            "AUC": roc_auc_score,
-            "MRR": mrr_score,
-            "NDCG@5": lambda y_true, y_score: ndcg_score(y_true, y_score, 5),
-            "NDCG@10": lambda y_true, y_score: ndcg_score(y_true, y_score, 10),
-        }
-        all_scores = defaultdict(list)
-
-        with torch.no_grad():
-            for history_ids, impression_ids, clicked in tqdm(
-                behaviors_dataloader, desc="Evaluating logs", disable=cfg.tqdm_disable
-            ):
-                if len(history_ids) == 0:
-                    continue
-                history = torch.stack([news_vectors[id] for id in history_ids])
-                impressions = torch.stack(
-                    [news_vectors[id] for id in impression_ids]
-                ).unsqueeze(0)
-                user_vector = model.get_user_vector(history.unsqueeze(0))
-                probs = model.get_prediction(
-                    impressions.to(device), user_vector
-                ).squeeze(0)
-                probs_list = probs.tolist()
-                for metric, scoring_fn in scoring_functions.items():
-                    all_scores[metric].append(scoring_fn(clicked, probs_list))
 
         tqdm.write(
-            " | ".join(
-                f"{metric}: {np.mean(scores):.5f}"
-                for metric, scores in all_scores.items()
-            )
+            " | ".join(f"{metric}: {score:.5f}" for metric, score in metrics.items())
         )
 
         # Save model
         torch.save(
             {
                 "model_state_dict": model.state_dict(),
-                "metrics": {
-                    metric: np.mean(scores) for metric, scores in all_scores.items()
-                },
+                "metrics": metrics,
             },
             f"checkpoint_{cfg.model.architecture}_{epoch_num}.pt",
         )
