@@ -30,6 +30,9 @@ jobs:
         run: |
           poetry run black --check src/
           poetry run isort --check src/
+
+      - name: Lint
+        run: poetry run ruff src/
         
       - name: Run mypy
         run: poetry run mypy src/

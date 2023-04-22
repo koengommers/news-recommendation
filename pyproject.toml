@@ -24,6 +24,13 @@ types-requests = "^2.28.11"
 pandas-stubs = "^1.5.3"
 types-tqdm = "^4.65.0"
 pytest = "^7.3.0"
+ruff = "^0.0.262"
+
+[tool.ruff]
+line-length = 120
+ignore = [
+  "E731" # Do not assign a lambda expression, use a def
+]
 
 [tool.mypy]
 disallow_untyped_defs = true

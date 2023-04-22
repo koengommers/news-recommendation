@@ -1359,6 +1359,14 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
+name = "ruff"
+version = "0.0.262"
+description = "An extremely fast Python linter, written in Rust."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[[package]]
 name = "scikit-learn"
 version = "1.2.2"
 description = "A set of python modules for machine learning and data mining"
@@ -1758,7 +1766,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "flake8 (<5)", "pytest-co
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.12"
-content-hash = "0a011fe23d17297b017329391a87c90fc25fb249b1737bf5d03ff833e6d9dbf3"
+content-hash = "d77bb29c3f2bf4326ca93fedf5d3c7f651a87b29705757704728b1ae3c704cf7"
 
 [metadata.files]
 antlr4-python3-runtime = []
@@ -1866,6 +1874,7 @@ regex = []
 requests = []
 rfc3339-validator = []
 rfc3986-validator = []
+ruff = []
 scikit-learn = []
 scipy = []
 send2trash = []
