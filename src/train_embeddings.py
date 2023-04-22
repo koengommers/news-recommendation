@@ -1,5 +1,4 @@
 import pickle
-from typing import Union
 
 import hydra
 import numpy as np
