@@ -27,8 +27,9 @@ jobs:
         run: poetry check
 
       - name: Check formatting
-        run: poetry run black --check src/
-        run: poetry run isort --check src/
+        run: 
+          - poetry run black --check src/
+          - poetry run isort --check src/
         
       - name: Run mypy
         run: poetry run mypy src/
