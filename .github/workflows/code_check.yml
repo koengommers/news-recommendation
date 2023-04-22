@@ -25,6 +25,9 @@ jobs:
         
       - name: Validate pyproject.toml
         run: poetry check
+
+      - name: Check formatting
+        run: poetry run black --check src/
         
       - name: Run mypy
         run: poetry run mypy src/
