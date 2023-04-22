@@ -22,7 +22,9 @@ TOPIC_GROUPS = [
 ]
 
 
-def evaluate_with_analogies(topic_encoder: LabelEncoder, embeddings: np.ndarray) -> dict[str, np.floating]:
+def evaluate_with_analogies(
+    topic_encoder: LabelEncoder, embeddings: np.ndarray
+) -> dict[str, np.floating]:
     def encode(topic: str) -> int:
         return int(topic_encoder.transform([topic])[0])
 

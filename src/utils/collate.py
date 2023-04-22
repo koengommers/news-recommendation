@@ -1,5 +1,6 @@
-import torch
 from typing import Any
+
+import torch
 
 
 def collate_fn(batch: Any) -> Any:
