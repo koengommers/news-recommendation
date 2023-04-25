@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -75,6 +77,7 @@ class MINER(nn.Module):
         candidate_news: dict[str, dict[str, torch.Tensor]],
         clicked_news: dict[str, dict[str, torch.Tensor]],
         labels: torch.Tensor,
+        mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         batch_size, n_candidate_news, num_words = candidate_news["title"][
             "input_ids"
@@ -103,7 +106,7 @@ class MINER(nn.Module):
         )
 
         # batch_size, n_interest_vectors, hidden_size
-        user_vectors = self.get_user_vector(clicked_news_vector)
+        user_vectors = self.get_user_vector(clicked_news_vector, mask)
 
         dot_products = torch.bmm(user_vectors, user_vectors.transpose(1, 2))
         norms = torch.norm(user_vectors, p=2, dim=-1, keepdim=True)
@@ -124,8 +127,15 @@ class MINER(nn.Module):
             news_titles[key] = news_titles[key].to(self.device)
         return self.news_encoder(news_titles)
 
-    def get_user_vector(self, clicked_news_vector: torch.Tensor) -> torch.Tensor:
-        return self.user_encoder(clicked_news_vector.to(self.device))
+    def get_user_vector(
+        self, clicked_news_vector: torch.Tensor, mask: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
+        if mask is not None:
+            return self.user_encoder(
+                clicked_news_vector.to(self.device), mask.to(self.device)
+            )
+        else:
+            return self.user_encoder(clicked_news_vector.to(self.device))
 
     def get_prediction(
         self, news_vector: torch.Tensor, user_vectors: torch.Tensor

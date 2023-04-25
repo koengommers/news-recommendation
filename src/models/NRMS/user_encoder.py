@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 
 from models.modules.attention.additive import AdditiveAttention
@@ -19,7 +21,9 @@ class UserEncoder(torch.nn.Module):
             query_vector_dim, word_embedding_dim
         )
 
-    def forward(self, user_vector: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, user_vector: torch.Tensor, mask: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         """
         Args:
             user_vector: batch_size, num_clicked_news_a_user, word_embedding_dim
@@ -27,7 +31,7 @@ class UserEncoder(torch.nn.Module):
             (shape) batch_size, word_embedding_dim
         """
         # batch_size, num_clicked_news_a_user, word_embedding_dim
-        multihead_user_vector = self.multihead_self_attention(user_vector)
+        multihead_user_vector = self.multihead_self_attention(user_vector, mask=mask)
         # batch_size, word_embedding_dim
-        final_user_vector = self.additive_attention(multihead_user_vector)
+        final_user_vector = self.additive_attention(multihead_user_vector, mask)
         return final_user_vector

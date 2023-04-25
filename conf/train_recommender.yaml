@@ -9,3 +9,4 @@ learning_rate: 0.0001
 num_batches_show_loss: 100
 tqdm_disable: false
 mind_variant: "small"
+use_history_mask: true

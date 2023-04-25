@@ -22,7 +22,7 @@ class ScaledDotProductAttention(nn.Module):
         scores = torch.matmul(Q, K.transpose(-1, -2)) / np.sqrt(self.d_k)
         scores = torch.exp(scores)
         if attn_mask is not None:
-            scores = scores * attn_mask
+            scores = scores * attn_mask.unsqueeze(-2)
         attn = scores / (torch.sum(scores, dim=-1, keepdim=True) + 1e-8)
 
         context = torch.matmul(attn, V)
@@ -54,7 +54,7 @@ class MultiHeadSelfAttention(nn.Module):
         Q: torch.Tensor,
         K: Optional[torch.Tensor] = None,
         V: Optional[torch.Tensor] = None,
-        length: Optional[torch.Tensor] = None,
+        mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         if K is None:
             K = Q
@@ -78,17 +78,10 @@ class MultiHeadSelfAttention(nn.Module):
             .transpose(1, 2)
         )
 
-        if length is not None:
-            maxlen = Q.size(1)
-            attn_mask = torch.arange(maxlen).to(device).expand(
-                batch_size, maxlen
-            ) < length.to(device).view(-1, 1)
-            attn_mask = attn_mask.unsqueeze(1).expand(batch_size, maxlen, maxlen)
-            attn_mask = attn_mask.unsqueeze(1).repeat(1, self.num_attention_heads, 1, 1)
-        else:
-            attn_mask = None
+        if mask is not None:
+            mask = mask.unsqueeze(1).expand(-1, self.num_attention_heads, -1)
 
-        context, _ = ScaledDotProductAttention(self.d_k)(q_s, k_s, v_s, attn_mask)
+        context, _ = ScaledDotProductAttention(self.d_k)(q_s, k_s, v_s, mask)
         context = (
             context.transpose(1, 2)
             .contiguous()
