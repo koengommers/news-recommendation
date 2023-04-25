@@ -8,7 +8,7 @@ from sklearn.metrics import roc_auc_score
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from datasets.behaviors import BehaviorsDataset
+from datasets.behaviors import BehaviorsDataset, behaviors_collate_fn
 from datasets.news import NewsDataset
 from evaluation.metrics import mrr_score, ndcg_score
 from models.BERT_NRMS import BERT_NRMS
@@ -61,12 +61,12 @@ def evaluate(
             output = output.to(torch.device("cpu"))
             news_vectors.update(dict(zip(news_ids, output)))
 
-    behaviors_dataset = BehaviorsDataset(
-        cfg.mind_variant,
-        "dev",
-    )
+    behaviors_dataset = BehaviorsDataset(cfg.mind_variant, split, news_vectors)
     behaviors_dataloader = DataLoader(
-        behaviors_dataset, batch_size=1, collate_fn=lambda x: x[0]
+        behaviors_dataset,
+        batch_size=cfg.batch_size,
+        collate_fn=behaviors_collate_fn,
+        drop_last=False,
     )
 
     scoring_functions = {
@@ -78,20 +78,24 @@ def evaluate(
     all_scores = defaultdict(list)
 
     with torch.no_grad():
-        for history_ids, impression_ids, clicked in tqdm(
+        for clicked_news_vectors, mask, impression_ids, clicked in tqdm(
             behaviors_dataloader, desc="Evaluating logs", disable=cfg.tqdm_disable
         ):
-            if len(history_ids) == 0:
-                continue
-            history = torch.stack([news_vectors[id] for id in history_ids])
-            impressions = torch.stack(
-                [news_vectors[id] for id in impression_ids]
-            ).unsqueeze(0)
-            user_vector = model.get_user_vector(history.unsqueeze(0))
-            probs = model.get_prediction(impressions.to(device), user_vector).squeeze(0)
-            probs_list = probs.tolist()
-            for metric, scoring_fn in scoring_functions.items():
-                all_scores[metric].append(scoring_fn(clicked, probs_list))
+            if cfg.use_history_mask:
+                user_vectors = model.get_user_vector(clicked_news_vectors, mask)
+            else:
+                user_vectors = model.get_user_vector(clicked_news_vectors)
+
+            for i in range(len(impression_ids)):
+                impressions = torch.stack(
+                    [news_vectors[id] for id in impression_ids[i]]
+                ).unsqueeze(0)
+                probs = model.get_prediction(
+                    impressions.to(device), user_vectors[i].unsqueeze(0)
+                ).squeeze(0)
+                probs_list = probs.tolist()
+                for metric, scoring_fn in scoring_functions.items():
+                    all_scores[metric].append(scoring_fn(clicked[i], probs_list))
 
     metrics = {metric: np.mean(scores) for metric, scores in all_scores.items()}
     return metrics

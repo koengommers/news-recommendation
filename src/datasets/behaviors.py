@@ -1,8 +1,18 @@
 from typing import Tuple
 
+import torch
 from torch.utils.data import Dataset
 
 from utils.data import load_behaviors
+
+
+def behaviors_collate_fn(batch):
+    clicked_news_vectors = torch.stack([x[0] for x in batch])
+    mask = torch.Tensor([x[1] for x in batch])
+    impression_ids = [x[2] for x in batch]
+    clicked = [x[3] for x in batch]
+
+    return clicked_news_vectors, mask, impression_ids, clicked
 
 
 class BehaviorsDataset(Dataset):
@@ -15,27 +25,40 @@ class BehaviorsDataset(Dataset):
         self,
         mind_variant: str,
         split: str,
+        news_vectors: dict[str, torch.Tensor],
         history_length: int = 50,
     ):
         self.mind_variant = mind_variant
         self.split = split
         self.history_length = history_length
 
+        self.news_vectors = news_vectors
+        self.news_vectors["<PAD>"] = torch.zeros(next(iter(self.news_vectors.values())).size())
+
         self.behaviors = load_behaviors(
             mind_variant, splits=[self.split], columns=["history", "impressions"]
         )
 
+    def pad_history_ids(self, history_ids):
+        padding_length = self.history_length - len(history_ids)
+        padded_history = ["<PAD>"] * padding_length + history_ids
+        mask = [0] * padding_length + [1] * len(history_ids)
+        return padded_history, mask
+
+
     def __len__(self) -> int:
         return len(self.behaviors)
 
-    def __getitem__(self, idx: int) -> Tuple[list[str], list[str], list[int]]:
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, list[int], list[str], list[int]]:
         row = self.behaviors.iloc[idx]
+        padded_history, mask = self.pad_history_ids(row.history[:self.history_length])
+        clicked_news_vectors = torch.stack([self.news_vectors[id] for id in padded_history])
 
-        impressions: list[str]
+        impression_ids: list[str]
         clicked_str: list[int]
-        impressions, clicked_str = zip(
+        impression_ids, clicked_str = zip(
             *map(lambda impression: impression.split("-"), row.impressions)
         )
         clicked: list[int] = [int(y) for y in clicked_str]
 
-        return row.history[: self.history_length], impressions, clicked
+        return clicked_news_vectors, mask, impression_ids, clicked
