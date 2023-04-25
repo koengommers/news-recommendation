@@ -111,6 +111,8 @@ def sample_news(source, variant_name):
 
 @hydra.main(version_base=None, config_path="../conf", config_name="sample_data")
 def sample_data(cfg: DictConfig):
+    random.seed(cfg.seed)
+
     # Step 1: Make directories for new dataset
     splits = ["train", "test", "dev"]
     for split in splits:
@@ -120,7 +122,8 @@ def sample_data(cfg: DictConfig):
     # Step 2: Sample from the user ids
     print("Sampling users...")
     user_ids = get_unique_user_ids()
-    sampled_users = set(random.sample(list(user_ids), cfg.num_users))
+    sorted_users = sorted(list(user_ids)) # sort to make it deterministic
+    sampled_users = set(random.sample(sorted_users, cfg.num_users))
 
     # Step 3: Select behaviors from those users
     print("Selecting behaviors...")
