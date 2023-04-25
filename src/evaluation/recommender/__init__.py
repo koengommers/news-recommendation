@@ -1,4 +1,4 @@
-from collections import defaultdict
+from multiprocessing import Pool
 from typing import Callable, Union
 
 import numpy as np
@@ -21,6 +21,21 @@ from utils.encode import CategoricalEncoder
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 TokenizerOutput = Union[list[int], dict[str, list[int]]]
+
+
+scoring_functions = {
+    "AUC": roc_auc_score,
+    "MRR": mrr_score,
+    "NDCG@5": lambda y_true, y_score: ndcg_score(y_true, y_score, 5),
+    "NDCG@10": lambda y_true, y_score: ndcg_score(y_true, y_score, 10),
+}
+
+
+def calculate_metrics(result):
+    return {
+        metric: scoring_fn(result[0], result[1])
+        for metric, scoring_fn in scoring_functions.items()
+    }
 
 
 def evaluate(
@@ -91,18 +106,10 @@ def evaluate(
                 results.append((clicked[i], probs_list))
 
     # Calculate metrics
-    scoring_functions = {
-        "AUC": roc_auc_score,
-        "MRR": mrr_score,
-        "NDCG@5": lambda y_true, y_score: ndcg_score(y_true, y_score, 5),
-        "NDCG@10": lambda y_true, y_score: ndcg_score(y_true, y_score, 10),
-    }
-    all_scores = defaultdict(list)
-    for y_true, y_score in tqdm(
-        results, desc="Calculating metrics", disable=cfg.tqdm_disable
-    ):
-        for metric, scoring_fn in scoring_functions.items():
-            all_scores[metric].append(scoring_fn(y_true, y_score))
+    with Pool(processes=cfg.num_workers) as pool:
+        scores = pool.map(calculate_metrics, results)
 
-    metrics = {metric: np.mean(scores) for metric, scores in all_scores.items()}
+    metrics = {
+        metric: np.mean([x[metric] for x in scores]) for metric in scoring_functions
+    }
     return metrics
