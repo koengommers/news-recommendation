@@ -68,7 +68,12 @@ def main(cfg: DictConfig) -> None:
         news_features,
     )
     dataloader = DataLoader(
-        dataset, batch_size=cfg.batch_size, collate_fn=collate_fn, drop_last=True
+        dataset,
+        batch_size=cfg.batch_size,
+        collate_fn=collate_fn,
+        drop_last=True,
+        pin_memory=True,
+        num_workers=cfg.num_workers,
     )
 
     # Init model

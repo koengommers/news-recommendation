@@ -10,3 +10,4 @@ num_batches_show_loss: 100
 tqdm_disable: false
 mind_variant: "small"
 use_history_mask: true
+num_workers: 4
