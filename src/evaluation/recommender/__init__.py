@@ -69,14 +69,8 @@ def evaluate(
         drop_last=False,
     )
 
-    scoring_functions = {
-        "AUC": roc_auc_score,
-        "MRR": mrr_score,
-        "NDCG@5": lambda y_true, y_score: ndcg_score(y_true, y_score, 5),
-        "NDCG@10": lambda y_true, y_score: ndcg_score(y_true, y_score, 10),
-    }
-    all_scores = defaultdict(list)
-
+    # Make predictions
+    results = []
     with torch.no_grad():
         for clicked_news_vectors, mask, impression_ids, clicked in tqdm(
             behaviors_dataloader, desc="Evaluating logs", disable=cfg.tqdm_disable
@@ -94,8 +88,21 @@ def evaluate(
                     impressions.to(device), user_vectors[i].unsqueeze(0)
                 ).squeeze(0)
                 probs_list = probs.tolist()
-                for metric, scoring_fn in scoring_functions.items():
-                    all_scores[metric].append(scoring_fn(clicked[i], probs_list))
+                results.append((clicked[i], probs_list))
+
+    # Calculate metrics
+    scoring_functions = {
+        "AUC": roc_auc_score,
+        "MRR": mrr_score,
+        "NDCG@5": lambda y_true, y_score: ndcg_score(y_true, y_score, 5),
+        "NDCG@10": lambda y_true, y_score: ndcg_score(y_true, y_score, 10),
+    }
+    all_scores = defaultdict(list)
+    for y_true, y_score in tqdm(
+        results, desc="Calculating metrics", disable=cfg.tqdm_disable
+    ):
+        for metric, scoring_fn in scoring_functions.items():
+            all_scores[metric].append(scoring_fn(y_true, y_score))
 
     metrics = {metric: np.mean(scores) for metric, scores in all_scores.items()}
     return metrics
