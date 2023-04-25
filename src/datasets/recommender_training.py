@@ -120,7 +120,7 @@ class RecommenderTrainingDataset(Dataset):
 
         return parsed_news
 
-    def pad_history(self, history: list[NewsItem]) -> list[NewsItem]:
+    def pad_history(self, history: list[NewsItem]) -> tuple[list[NewsItem], list[int]]:
         padding_all = {
             "title": self.tokenizer("", self.num_words_title),
             "abstract": self.tokenizer("", self.num_words_abstract),
@@ -129,15 +129,17 @@ class RecommenderTrainingDataset(Dataset):
         }
         padding = {feature: padding_all[feature] for feature in self.news_features}
         padding_length = self.history_length - len(history)
-        return [padding] * padding_length + history
+        padded_history = [padding] * padding_length + history
+        mask = [0] * padding_length + [1] * len(history)
+        return padded_history, mask
 
     def __len__(self) -> int:
         return len(self.logs)
 
-    def __getitem__(self, idx: int) -> tuple[list[NewsItem], list[NewsItem]]:
+    def __getitem__(self, idx: int) -> tuple[list[NewsItem], list[int], list[NewsItem]]:
         row = self.logs.iloc[idx]
-        history = self.pad_history(
+        history, mask = self.pad_history(
             [self.news[id] for id in row.history[: self.history_length]]
         )
         candidate_news = [self.news[id] for id in row.candidate_news]
-        return history, candidate_news
+        return history, mask, candidate_news

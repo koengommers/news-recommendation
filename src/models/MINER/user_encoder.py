@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 
@@ -19,10 +21,12 @@ class UserEncoder(nn.Module):
             ]
         )
 
-    def forward(self, clicked_news_vectors: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, clicked_news_vectors: torch.Tensor, mask: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         user_vectors = torch.stack(
             [
-                additive_attention(clicked_news_vectors)
+                additive_attention(clicked_news_vectors, mask)
                 for additive_attention in self.additive_attentions
             ],
             dim=1,

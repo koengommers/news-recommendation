@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -20,7 +22,9 @@ class AdditiveAttention(torch.nn.Module):
             torch.empty(query_vector_dim).uniform_(-0.1, 0.1)
         )
 
-    def forward(self, candidate_vector: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, candidate_vector: torch.Tensor, mask: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         """
         Args:
             candidate_vector: batch_size, candidate_size, candidate_vector_dim
@@ -29,6 +33,8 @@ class AdditiveAttention(torch.nn.Module):
         """
         # batch_size, candidate_size, query_vector_dim
         temp = torch.tanh(self.linear(candidate_vector))
+        if mask is not None:
+            temp = temp * mask.unsqueeze(2)
         # batch_size, candidate_size
         candidate_weights = F.softmax(
             torch.matmul(temp, self.attention_query_vector), dim=1

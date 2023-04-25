@@ -115,13 +115,16 @@ def main(cfg: DictConfig) -> None:
         # Train
         model.train()
 
-        for batch_num, (history, candidate_news) in tqdm(
+        for batch_num, (history, mask, candidate_news) in tqdm(
             enumerate(dataloader, 1), total=len(dataloader), disable=cfg.tqdm_disable
         ):
             optimizer.zero_grad()
 
             labels = torch.zeros(cfg.batch_size).long().to(device)
-            loss = model(candidate_news, history, labels)
+            if cfg.use_history_mask:
+                loss = model(candidate_news, history, labels, mask)
+            else:
+                loss = model(candidate_news, history, labels)
             total_train_loss += loss.item()
             loss.backward()
 
