@@ -1,10 +1,10 @@
 import os
-import hydra
 import random
 import time
-from omegaconf import DictConfig
 
+import hydra
 import pandas as pd
+from omegaconf import DictConfig
 
 from utils.data import get_mind_file, get_mind_path
 
@@ -124,7 +124,9 @@ def sample_data(cfg: DictConfig):
 
     # Step 3: Select behaviors from those users
     print("Selecting behaviors...")
-    user_counts, log_counts = sample_behaviors(sampled_users, cfg.source, cfg.variant_name)
+    user_counts, log_counts = sample_behaviors(
+        sampled_users, cfg.source, cfg.variant_name
+    )
 
     # Step 4: Copy the news used in those behaviors
     print("Copying news...")
