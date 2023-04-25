@@ -1,3 +1,4 @@
+import random
 from enum import Enum
 from typing import Union
 
@@ -30,6 +31,9 @@ class Architecture(str, Enum):
 
 @hydra.main(version_base=None, config_path="../conf", config_name="train_recommender")
 def main(cfg: DictConfig) -> None:
+    random.seed(cfg.seed)
+    torch.manual_seed(cfg.seed)
+
     # Set up tokenizer
     if cfg.model.architecture in [Architecture.BERT_NRMS, Architecture.MINER]:
         tokenizer = AutoTokenizer.from_pretrained(cfg.model.pretrained_model_name)

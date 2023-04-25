@@ -18,6 +18,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 @hydra.main(version_base=None, config_path="../conf", config_name="train_embeddings")
 def main(cfg: DictConfig) -> None:
+    torch.manual_seed(cfg.seed)
+    np.random.seed(cfg.seed)
+
     dataset = TopicReadsDataset(variant=cfg.mind_variant)
     dataloader = DataLoader(dataset, batch_size=cfg.batch_size, shuffle=True)
 

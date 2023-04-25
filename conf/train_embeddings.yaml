@@ -1,3 +1,4 @@
+seed: 123
 epochs: 5
 mind_variant: "small"
 embedding_dim: 100

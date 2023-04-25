@@ -1,3 +1,4 @@
+seed: 123
 variant_name: "200k"
 num_users: 200000
 source: "large"
