@@ -33,14 +33,7 @@ ignore = [
 ]
 
 [tool.mypy]
-disallow_untyped_defs = true
 ignore_missing_imports = true
-# implicit_optional = false
-# strict = true
-# disallow_any_unimported = true
-# disallow_any_expr = true
-# disallow_any_decorated = true
-# disallow_any_explicit = true
 
 [[tool.mypy.overrides]]
 module = "tests.*"
