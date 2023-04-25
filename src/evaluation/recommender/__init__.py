@@ -82,6 +82,8 @@ def evaluate(
         batch_size=cfg.batch_size,
         collate_fn=behaviors_collate_fn,
         drop_last=False,
+        pin_memory=True,
+        num_workers=cfg.num_workers,
     )
 
     # Make predictions

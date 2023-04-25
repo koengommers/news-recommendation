@@ -33,7 +33,9 @@ class BehaviorsDataset(Dataset):
         self.history_length = history_length
 
         self.news_vectors = news_vectors
-        self.news_vectors["<PAD>"] = torch.zeros(next(iter(self.news_vectors.values())).size())
+        self.news_vectors["<PAD>"] = torch.zeros(
+            next(iter(self.news_vectors.values())).size()
+        )
 
         self.behaviors = load_behaviors(
             mind_variant, splits=[self.split], columns=["history", "impressions"]
@@ -45,14 +47,17 @@ class BehaviorsDataset(Dataset):
         mask = [0] * padding_length + [1] * len(history_ids)
         return padded_history, mask
 
-
     def __len__(self) -> int:
         return len(self.behaviors)
 
-    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, list[int], list[str], list[int]]:
+    def __getitem__(
+        self, idx: int
+    ) -> Tuple[torch.Tensor, list[int], list[str], list[int]]:
         row = self.behaviors.iloc[idx]
-        padded_history, mask = self.pad_history_ids(row.history[:self.history_length])
-        clicked_news_vectors = torch.stack([self.news_vectors[id] for id in padded_history])
+        padded_history, mask = self.pad_history_ids(row.history[: self.history_length])
+        clicked_news_vectors = torch.stack(
+            [self.news_vectors[id] for id in padded_history]
+        )
 
         impression_ids: list[str]
         clicked_str: list[int]
