@@ -122,7 +122,7 @@ def sample_data(cfg: DictConfig):
     # Step 2: Sample from the user ids
     print("Sampling users...")
     user_ids = get_unique_user_ids()
-    sorted_users = sorted(list(user_ids)) # sort to make it deterministic
+    sorted_users = sorted(list(user_ids))  # sort to make it deterministic
     sampled_users = set(random.sample(sorted_users, cfg.num_users))
 
     # Step 3: Select behaviors from those users
