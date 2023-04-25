@@ -1,6 +1,8 @@
 import os
+import hydra
 import random
 import time
+from omegaconf import DictConfig
 
 import pandas as pd
 
@@ -26,10 +28,10 @@ def get_unique_user_ids(source_splits=["train", "dev"]):
     return user_ids
 
 
-def sample_behaviors(sampled_users, variant_name):
+def sample_behaviors(sampled_users, source_variant, variant_name):
     users_in_train = set()
     with open_behaviors_file(variant_name, "train", "w") as target:
-        with open_behaviors_file("large", "train") as source:
+        with open_behaviors_file(source_variant, "train") as source:
             count_train = 0
             for line in source:
                 if line.split()[1] in sampled_users:
@@ -41,7 +43,7 @@ def sample_behaviors(sampled_users, variant_name):
     users_in_test = set()
     with open_behaviors_file(variant_name, "dev", "w") as target_dev:
         with open_behaviors_file(variant_name, "test", "w") as target_test:
-            with open_behaviors_file("large", "train") as source:
+            with open_behaviors_file(source_variant, "dev") as source:
                 count_dev = 0
                 count_test = 0
                 for line in source:
@@ -90,7 +92,7 @@ def copy_news(news_ids, source, target):
                     target.write(line)
 
 
-def sample_news(variant_name):
+def sample_news(source, variant_name):
     source_splits = ["train", "dev", "dev"]
     target_splits = ["train", "dev", "test"]
     news_counts = {}
@@ -100,44 +102,45 @@ def sample_news(variant_name):
         news_ids = get_unique_news_ids(variant_name, target_split)
         news_counts[target_split] = len(news_ids)
         all_news_ids.update(news_ids)
-        copy_news(news_ids, ("large", source_split), (variant_name, target_split))
+        copy_news(news_ids, (source, source_split), (variant_name, target_split))
 
     news_counts["total"] = len(all_news_ids)
 
     return news_counts
 
 
-def sample_data(variant_name, num_users):
+@hydra.main(version_base=None, config_path="../conf", config_name="sample_data")
+def sample_data(cfg: DictConfig):
     # Step 1: Make directories for new dataset
     splits = ["train", "test", "dev"]
     for split in splits:
-        new_data_path = get_mind_path(variant_name, split)
+        new_data_path = get_mind_path(cfg.variant_name, split)
         os.makedirs(new_data_path, exist_ok=True)
 
     # Step 2: Sample from the user ids
     print("Sampling users...")
     user_ids = get_unique_user_ids()
-    sampled_users = set(random.sample(list(user_ids), num_users))
+    sampled_users = set(random.sample(list(user_ids), cfg.num_users))
 
     # Step 3: Select behaviors from those users
     print("Selecting behaviors...")
-    user_counts, log_counts = sample_behaviors(sampled_users, variant_name)
+    user_counts, log_counts = sample_behaviors(sampled_users, cfg.source, cfg.variant_name)
 
     # Step 4: Copy the news used in those behaviors
     print("Copying news...")
-    news_counts = sample_news(variant_name)
+    news_counts = sample_news(cfg.source, cfg.variant_name)
 
     # Step 5: Stats
     stats = pd.DataFrame(
         [user_counts, log_counts, news_counts], index=["n_users", "n_logs", "n_news"]
     ).transpose()
     print(stats)
-    stats.to_csv(os.path.join(get_mind_path(variant_name), "stats.csv"))
+    stats.to_csv(os.path.join(get_mind_path(cfg.variant_name), "stats.csv"))
 
 
 if __name__ == "__main__":
     start_time = time.time()
-    sample_data("200k", 200000)
+    sample_data()
     end_time = time.time()
     duration = end_time - start_time
     print(f"Sampled data in {duration:.2f}s")
