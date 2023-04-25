@@ -2,6 +2,8 @@ import os
 import random
 import time
 
+import pandas as pd
+
 from utils.data import get_mind_file, get_mind_path
 
 
@@ -34,8 +36,6 @@ def sample_behaviors(sampled_users, variant_name):
                     users_in_train.add(line.split()[1])
                     target.write(line)
                     count_train += 1
-    print(f"Number of users in train: {len(users_in_train)}")
-    print(f"Number of logs in train: {count_train}")
 
     users_in_dev = set()
     users_in_test = set()
@@ -54,10 +54,18 @@ def sample_behaviors(sampled_users, variant_name):
                             target_dev.write(line)
                             users_in_dev.add(line.split()[1])
                             count_dev += 1
-    print(f"Number of users in dev: {len(users_in_dev)}")
-    print(f"Number of logs in dev: {count_dev}")
-    print(f"Number of users in test: {len(users_in_test)}")
-    print(f"Number of logs in test: {count_test}")
+
+    user_counts = {
+        "train": len(users_in_train),
+        "dev": len(users_in_dev),
+        "test": len(users_in_test),
+    }
+    log_counts = {
+        "train": count_train,
+        "dev": count_dev,
+        "test": count_test,
+    }
+    return user_counts, log_counts
 
 
 def get_unique_news_ids(variant_name, split):
@@ -83,11 +91,14 @@ def copy_news(news_ids, source, target):
 def sample_news(variant_name):
     source_splits = ["train", "dev", "dev"]
     target_splits = ["train", "dev", "test"]
+    news_counts = {}
 
     for source_split, target_split in zip(source_splits, target_splits):
         news_ids = get_unique_news_ids(variant_name, target_split)
-        print(f"Number of news in {target_split}: {len(news_ids)}")
+        news_counts[target_split] = len(news_ids)
         copy_news(news_ids, ("large", source_split), (variant_name, target_split))
+
+    return news_counts
 
 
 def sample_data(variant_name, num_users):
@@ -98,14 +109,24 @@ def sample_data(variant_name, num_users):
         os.makedirs(new_data_path, exist_ok=True)
 
     # Step 2: Sample from the user ids
+    print("Sampling users...")
     user_ids = get_unique_user_ids()
     sampled_users = set(random.sample(list(user_ids), num_users))
 
     # Step 3: Select behaviors from those users
-    sample_behaviors(sampled_users, variant_name)
+    print("Selecting behaviors...")
+    user_counts, log_counts = sample_behaviors(sampled_users, variant_name)
 
     # Step 4: Copy the news used in those behaviors
-    sample_news(variant_name)
+    print("Copying news...")
+    news_counts = sample_news(variant_name)
+
+    # Step 5: Stats
+    stats = pd.DataFrame(
+        [user_counts, log_counts, news_counts], index=["n_users", "n_logs", "n_news"]
+    ).transpose()
+    print(stats)
+    stats.to_csv(os.path.join(get_mind_path(variant_name), "stats.csv"))
 
 
 if __name__ == "__main__":
