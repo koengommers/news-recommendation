@@ -41,21 +41,18 @@ def sample_behaviors(sampled_users, variant_name):
             get_mind_file(variant_name, "test", "behaviors.tsv"), "w"
         ) as target_test:
             with open(get_mind_file("large", "train", "behaviors.tsv")) as source:
-                send_to_test = False
                 count_dev = 0
                 count_test = 0
                 for line in source:
                     if line.split()[1] in sampled_users:
-                        if send_to_test:
+                        if count_dev > count_test:
                             users_in_test.add(line.split()[1])
                             target_test.write(line)
                             count_test += 1
-                            send_to_test = False
                         else:
                             target_dev.write(line)
                             users_in_dev.add(line.split()[1])
                             count_dev += 1
-                            send_to_test = True
     print(f"Number of users in dev: {len(users_in_dev)}")
     print(f"Number of logs in dev: {count_dev}")
     print(f"Number of users in test: {len(users_in_test)}")
