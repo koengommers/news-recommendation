@@ -54,7 +54,7 @@ class BehaviorsDataset(Dataset):
         self, idx: int
     ) -> Tuple[torch.Tensor, list[int], list[str], list[int]]:
         row = self.behaviors.iloc[idx]
-        padded_history, mask = self.pad_history_ids(row.history[: self.history_length])
+        padded_history, mask = self.pad_history_ids(row.history[-self.history_length :])
         clicked_news_vectors = torch.stack(
             [self.news_vectors[id] for id in padded_history]
         )

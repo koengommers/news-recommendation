@@ -139,7 +139,7 @@ class RecommenderTrainingDataset(Dataset):
     def __getitem__(self, idx: int) -> tuple[list[NewsItem], list[int], list[NewsItem]]:
         row = self.logs.iloc[idx]
         history, mask = self.pad_history(
-            [self.news[id] for id in row.history[: self.history_length]]
+            [self.news[id] for id in row.history[-self.history_length :]]
         )
         candidate_news = [self.news[id] for id in row.candidate_news]
         return history, mask, candidate_news
