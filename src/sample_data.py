@@ -70,29 +70,17 @@ def get_unique_news_ids(variant_name, split):
 
 
 def sample_news(variant_name):
-    news_ids = get_unique_news_ids(variant_name, "train")
-    print(f"Number of news in train: {len(news_ids)}")
-    with open(get_mind_file(variant_name, "train", "news.tsv"), "w") as target:
-        with open(get_mind_file("large", "train", "news.tsv")) as source:
-            for line in source:
-                if line.split()[0] in news_ids:
-                    target.write(line)
+    source_splits = ["train", "dev", "dev"]
+    target_splits = ["train", "dev", "test"]
 
-    news_ids = get_unique_news_ids(variant_name, "dev")
-    print(f"Number of news in dev: {len(news_ids)}")
-    with open(get_mind_file(variant_name, "dev", "news.tsv"), "w") as target:
-        with open(get_mind_file("large", "dev", "news.tsv")) as source:
-            for line in source:
-                if line.split()[0] in news_ids:
-                    target.write(line)
-
-    news_ids = get_unique_news_ids(variant_name, "test")
-    print(f"Number of news in test: {len(news_ids)}")
-    with open(get_mind_file(variant_name, "test", "news.tsv"), "w") as target:
-        with open(get_mind_file("large", "dev", "news.tsv")) as source:
-            for line in source:
-                if line.split()[0] in news_ids:
-                    target.write(line)
+    for source_split, target_split in zip(source_splits, target_splits):
+        news_ids = get_unique_news_ids(variant_name, target_split)
+        print(f"Number of news in {target_split}: {len(news_ids)}")
+        with open(get_mind_file(variant_name, target_split, "news.tsv"), "w") as target:
+            with open(get_mind_file("large", source_split, "news.tsv")) as source:
+                for line in source:
+                    if line.split()[0] in news_ids:
+                        target.write(line)
 
 
 def sample_data(num_users, variant_name):
@@ -110,4 +98,3 @@ def sample_data(num_users, variant_name):
 
 if __name__ == "__main__":
     sample_data(200000, "200k")
-    # TODO: log number of users in each split
