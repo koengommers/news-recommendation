@@ -15,7 +15,7 @@ SPLITS = {
 DEFAULT_DATA_DIR = "./data"
 
 
-def _get_mind_path(
+def get_mind_path(
     variant: str, split: Optional[str] = None, data_dir: str = DEFAULT_DATA_DIR
 ) -> str:
     path = os.path.join(data_dir, f"mind_{variant}")
@@ -26,10 +26,10 @@ def _get_mind_path(
     return path
 
 
-def _get_mind_file(
+def get_mind_file(
     variant: str, split: str, filename: str, data_dir: str = DEFAULT_DATA_DIR
 ) -> str:
-    return os.path.join(_get_mind_path(variant, split, data_dir), filename)
+    return os.path.join(get_mind_path(variant, split, data_dir), filename)
 
 
 def download_zip(name: str, url: str, target_dir: str) -> None:
@@ -64,7 +64,7 @@ def download_mind(variant: str = "small", data_dir: str = DEFAULT_DATA_DIR) -> N
     for split in SPLITS[variant]:
         filename = f"MIND{variant}_{split}.zip"
         url = f"{BASE_URL}/{filename}"
-        download_zip(filename, url, _get_mind_path(variant, split, data_dir))
+        download_zip(filename, url, get_mind_path(variant, split, data_dir))
 
 
 def _load_mind_data(
@@ -75,13 +75,13 @@ def _load_mind_data(
     column_indices: list[int],
     data_dir: str = DEFAULT_DATA_DIR,
 ) -> pd.DataFrame:
-    if not os.path.exists(_get_mind_path(variant, data_dir=data_dir)):
+    if not os.path.exists(get_mind_path(variant, data_dir=data_dir)):
         download_mind(variant, data_dir)
 
     return pd.concat(
         [
             pd.read_table(
-                _get_mind_file(variant, split, filename, data_dir),
+                get_mind_file(variant, split, filename, data_dir),
                 names=column_names,
                 usecols=column_indices,
             ).assign(split=split)

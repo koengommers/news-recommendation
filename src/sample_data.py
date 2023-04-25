@@ -59,11 +59,13 @@ def sample_behaviors(sampled_users, variant_name):
         "train": len(users_in_train),
         "dev": len(users_in_dev),
         "test": len(users_in_test),
+        "total": len(sampled_users),
     }
     log_counts = {
         "train": count_train,
         "dev": count_dev,
         "test": count_test,
+        "total": count_train + count_dev + count_test,
     }
     return user_counts, log_counts
 
@@ -92,11 +94,15 @@ def sample_news(variant_name):
     source_splits = ["train", "dev", "dev"]
     target_splits = ["train", "dev", "test"]
     news_counts = {}
+    all_news_ids = set()
 
     for source_split, target_split in zip(source_splits, target_splits):
         news_ids = get_unique_news_ids(variant_name, target_split)
         news_counts[target_split] = len(news_ids)
+        all_news_ids.update(news_ids)
         copy_news(news_ids, ("large", source_split), (variant_name, target_split))
+
+    news_counts["total"] = len(all_news_ids)
 
     return news_counts
 
