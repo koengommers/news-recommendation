@@ -1,5 +1,6 @@
 import os
 import random
+import time
 
 from utils.data import get_mind_file, get_mind_path
 
@@ -97,4 +98,8 @@ def sample_data(num_users, variant_name):
 
 
 if __name__ == "__main__":
+    start_time = time.time()
     sample_data(200000, "200k")
+    end_time = time.time()
+    duration = end_time - start_time
+    print(f"Sampled data in {duration:.2f}s")
