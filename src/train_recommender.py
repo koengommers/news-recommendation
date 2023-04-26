@@ -7,7 +7,6 @@ import torch
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import AutoTokenizer
 
 from datasets.recommender_training import RecommenderTrainingDataset
 from evaluation.recommender import evaluate
@@ -17,7 +16,7 @@ from models.NRMS import NRMS
 from models.TANR import TANR
 from utils.collate import collate_fn
 from utils.data import load_pretrained_embeddings
-from utils.tokenize import NltkTokenizer
+from utils.tokenize import NltkTokenizer, BertTokenizer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -36,18 +35,9 @@ def main(cfg: DictConfig) -> None:
 
     # Set up tokenizer
     if cfg.model.architecture in [Architecture.BERT_NRMS, Architecture.MINER]:
-        tokenizer = AutoTokenizer.from_pretrained(cfg.model.pretrained_model_name)
-        tokenize = lambda text, length: dict(
-            tokenizer(
-                text,
-                max_length=length,
-                padding="max_length",
-                truncation=True,
-            )
-        )
+        tokenizer = BertTokenizer(cfg.model.pretrained_model_name)
     else:
         tokenizer = NltkTokenizer()
-        tokenize = lambda text, length: tokenizer(text, length)
 
     # Load dataset
     required_news_features = {
@@ -60,7 +50,7 @@ def main(cfg: DictConfig) -> None:
     dataset = RecommenderTrainingDataset(
         cfg.mind_variant,
         "train",
-        tokenize,
+        tokenizer,
         cfg.negative_sampling_ratio,
         cfg.num_words_title,
         cfg.num_words_abstract,

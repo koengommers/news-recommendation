@@ -1,4 +1,5 @@
 from nltk.tokenize import word_tokenize
+from transformers import AutoTokenizer
 
 
 class NltkTokenizer:
@@ -28,3 +29,14 @@ class NltkTokenizer:
             return ints + [0] * padding_length
         else:
             return ints[:length]
+
+
+class BertTokenizer:
+    def __init__(self, pretrained_model_name: str):
+        self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name)
+        self.pretrained_model_name = pretrained_model_name
+
+    def __call__(self, text: str, length: int) -> list[int]:
+        return self.tokenizer(
+            text, max_length=length, padding="max_length", truncation=True
+        )
