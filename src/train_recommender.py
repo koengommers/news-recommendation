@@ -112,7 +112,7 @@ def main(cfg: DictConfig) -> None:
         raise ValueError("Unknown model architecture")
 
     # Init optimizer
-    optimizer = torch.optim.Adam(model.parameters(), cfg.learning_rate)
+    optimizer = hydra.utils.instantiate(cfg.optimizer, params=model.parameters())
 
     for epoch_num in tqdm(range(1, cfg.epochs + 1), disable=cfg.tqdm_disable):
         total_train_loss = 0.0
