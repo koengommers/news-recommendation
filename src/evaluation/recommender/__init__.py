@@ -15,7 +15,7 @@ from models.BERT_NRMS import BERT_NRMS
 from models.MINER import MINER
 from models.NRMS import NRMS
 from models.TANR import TANR
-from src.utils.tokenize import BertTokenizer, NltkTokenizer
+from utils.tokenize import BertTokenizer, NltkTokenizer
 from utils.collate import collate_fn
 from utils.encode import CategoricalEncoder
 
@@ -44,7 +44,6 @@ def evaluate(
     split: str,
     tokenizer: Union[NltkTokenizer, BertTokenizer],
     categorical_encoders: dict[str, CategoricalEncoder],
-    news_features: list[str],
     cfg: DictConfig,
 ) -> dict[str, np.floating]:
     model.eval()
@@ -57,7 +56,7 @@ def evaluate(
         cfg.num_words_title,
         cfg.num_words_abstract,
         categorical_encoders,
-        news_features,
+        cfg.features,
     )
     news_dataloader = DataLoader(
         news_dataset,
