@@ -1,5 +1,5 @@
 from multiprocessing import Pool
-from typing import Callable, Union
+from typing import Union
 
 import numpy as np
 import torch
@@ -15,6 +15,7 @@ from models.BERT_NRMS import BERT_NRMS
 from models.MINER import MINER
 from models.NRMS import NRMS
 from models.TANR import TANR
+from src.utils.tokenize import BertTokenizer, NltkTokenizer
 from utils.collate import collate_fn
 from utils.encode import CategoricalEncoder
 
@@ -41,7 +42,7 @@ def calculate_metrics(result):
 def evaluate(
     model: Union[NRMS, TANR, BERT_NRMS, MINER],
     split: str,
-    tokenizer: Callable[[str, int], TokenizerOutput],
+    tokenizer: Union[NltkTokenizer, BertTokenizer],
     categorical_encoders: dict[str, CategoricalEncoder],
     news_features: list[str],
     cfg: DictConfig,
