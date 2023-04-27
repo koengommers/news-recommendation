@@ -3,9 +3,9 @@ defaults:
   - /tokenizer: bert
 
 model:
-  architecture: MINER
-  n_interest_vectors: 32
+  _target_: models.MINER.MINER
   pretrained_model_name: bert-base-uncased
+  n_interest_vectors: 32
   bert_pooling_method: pooler
   aggregate_method: weighted
   disagremeent_loss_weight: 0.8

@@ -16,6 +16,7 @@ class BERT_NRMS(nn.Module):
 
     def __init__(
         self,
+        dataset,
         pretrained_model_name: str,
         bert_pooling_method: str = "attention",
         num_hidden_layers: Optional[int] = None,

@@ -46,6 +46,7 @@ class MINER(nn.Module):
 
     def __init__(
         self,
+        dataset,
         pretrained_model_name: str,
         n_interest_vectors: int = 32,
         bert_pooling_method: str = "pooler",

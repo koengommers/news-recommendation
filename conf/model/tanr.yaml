@@ -3,7 +3,7 @@ defaults:
   - /tokenizer: nltk
 
 model:
-  architecture: TANR
+  _target_: models.TANR.TANR
   word_embedding_dim: 300
   use_pretrained_embeddings: true
   freeze_pretrained_embeddings: false

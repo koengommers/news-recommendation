@@ -1,34 +1,24 @@
 import random
-from enum import Enum
-from typing import Union
 
 import hydra
 import torch
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from datasets.recommender_training import RecommenderTrainingDataset
 from evaluation.recommender import evaluate
-from models.BERT_NRMS import BERT_NRMS
-from models.MINER import MINER
-from models.NRMS import NRMS
-from models.TANR import TANR
 from utils.collate import collate_fn
-from utils.data import load_pretrained_embeddings
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-class Architecture(str, Enum):
-    NRMS = "NRMS"
-    BERT_NRMS = "BERT-NRMS"
-    TANR = "TANR"
-    MINER = "MINER"
-
-
 @hydra.main(version_base=None, config_path="../conf", config_name="train_recommender")
 def main(cfg: DictConfig) -> None:
+    print("========== Config ==========")
+    print(OmegaConf.to_yaml(cfg))
+    print("============================")
+
     random.seed(cfg.seed)
     torch.manual_seed(cfg.seed)
 
@@ -54,40 +44,8 @@ def main(cfg: DictConfig) -> None:
         num_workers=cfg.num_workers,
     )
 
-    # Init model
-    model: Union[NRMS, TANR, BERT_NRMS, MINER]
-    if cfg.model.architecture == Architecture.NRMS:
-        pretrained_embeddings = (
-            load_pretrained_embeddings(tokenizer.t2i)
-            if cfg.model.use_pretrained_embeddings
-            else None
-        )
-        model = NRMS(
-            tokenizer.vocab_size + 1,
-            pretrained_embeddings=pretrained_embeddings,
-            freeze_pretrained_embeddings=cfg.model.freeze_pretrained_embeddings,
-        ).to(device)
-    elif cfg.model.architecture == Architecture.TANR:
-        pretrained_embeddings = (
-            load_pretrained_embeddings(tokenizer.t2i)
-            if cfg.model.use_pretrained_embeddings
-            else None
-        )
-        model = TANR(
-            tokenizer.vocab_size + 1,
-            dataset.categorical_encoders["category"].n_categories + 1,
-            pretrained_embeddings=pretrained_embeddings,
-            freeze_pretrained_embeddings=cfg.model.freeze_pretrained_embeddings,
-        ).to(device)
-    elif cfg.model.architecture == Architecture.BERT_NRMS:
-        model = BERT_NRMS(
-            cfg.model.pretrained_model_name,
-            num_hidden_layers=cfg.model.num_hidden_layers,
-        ).to(device)
-    elif cfg.model.architecture == Architecture.MINER:
-        model = MINER(cfg.model.pretrained_model_name).to(device)
-    else:
-        raise ValueError("Unknown model architecture")
+    # Init model, dataset needs to be passed for number of words and categories
+    model = hydra.utils.instantiate(cfg.model, dataset).to(device)
 
     # Init optimizer
     optimizer = hydra.utils.instantiate(cfg.optimizer, params=model.parameters())
@@ -123,9 +81,7 @@ def main(cfg: DictConfig) -> None:
         )
 
         # Evaluate
-        metrics = evaluate(
-            model, "dev", tokenizer, dataset.categorical_encoders, news_features, cfg
-        )
+        metrics = evaluate(model, "dev", tokenizer, dataset.categorical_encoders, cfg)
 
         tqdm.write(
             " | ".join(f"{metric}: {score:.5f}" for metric, score in metrics.items())

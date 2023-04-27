@@ -3,10 +3,10 @@ defaults:
   - /tokenizer: bert
 
 model:
-  architecture: BERT-NRMS
+  _target_: models.BERT_NRMS.BERT_NRMS
   pretrained_model_name: bert-base-uncased
   bert_pooling_method: attention
   num_hidden_layers: 8
 
 features:
-  - category
+  - title

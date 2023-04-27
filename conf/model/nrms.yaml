@@ -3,7 +3,7 @@ defaults:
   - /tokenizer: nltk
 
 model:
-  architecture: NRMS
+  _target_: models.NRMS.NRMS
   word_embedding_dim: 300
   use_pretrained_embeddings: true
   freeze_pretrained_embeddings: false
