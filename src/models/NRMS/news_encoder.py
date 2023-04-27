@@ -1,3 +1,5 @@
+from functools import partial
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -41,16 +43,41 @@ class NewsEncoder(nn.Module):
             query_vector_dim, word_embedding_dim
         )
 
-    def forward(self, news: torch.Tensor) -> torch.Tensor:
+    @property
+    def device(self) -> torch.device:
+        return next(self.parameters()).device
+
+    def stack_batches(self, news):
+        batch_size, n_news, num_words = news.size()
+        news = news.reshape(-1, num_words)
+        unstack = partial(self.unstack_batches, batch_size=batch_size, n_news=n_news)
+
+        return news, unstack
+
+    @staticmethod
+    def unstack_batches(news_vectors, batch_size, n_news):
+        return news_vectors.reshape(batch_size, n_news, -1)
+
+    def forward(self, news: dict[str, torch.Tensor]) -> torch.Tensor:
         """
         Args:
-            news: batch_size * num_words_title
+            news: [
+                {
+                    "title": batch_size * num_words_title
+                }
+            ]
         Returns:
             (shape) batch_size, word_embedding_dim
         """
+        titles = news["title"].to(self.device)
+
+        has_multiple_news = titles.dim() == 3
+        if has_multiple_news:
+            titles, unstack = self.stack_batches(titles)
+
         # batch_size, num_words_title, word_embedding_dim
         news_vector = F.dropout(
-            self.word_embedding(news),
+            self.word_embedding(titles),
             p=self.dropout_probability,
             training=self.training,
         )
@@ -63,4 +90,8 @@ class NewsEncoder(nn.Module):
         )
         # batch_size, word_embedding_dim
         final_news_vector = self.additive_attention(multihead_news_vector)
+
+        if has_multiple_news:
+            final_news_vector = unstack(final_news_vector)  # type:ignore
+
         return final_news_vector

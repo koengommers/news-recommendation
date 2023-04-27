@@ -3,7 +3,8 @@ defaults:
   - /tokenizer: bert
 
 model:
-  _target_: models.BERT_NRMS.BERT_NRMS
+  _target_: models.NRMS.NRMS
+  num_attention_heads: 16
 
 news_encoder:
   _target_: models.modules.bert.news_encoder.NewsEncoder

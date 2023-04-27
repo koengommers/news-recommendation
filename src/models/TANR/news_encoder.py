@@ -1,4 +1,5 @@
 import torch
+from functools import partial
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -43,16 +44,41 @@ class NewsEncoder(nn.Module):
         )
         self.title_attention = AdditiveAttention(query_vector_dim, num_filters)
 
-    def forward(self, news: torch.Tensor) -> torch.Tensor:
+    @property
+    def device(self) -> torch.device:
+        return next(self.parameters()).device
+
+    def stack_batches(self, news):
+        batch_size, n_news, num_words = news.size()
+        news = news.reshape(-1, num_words)
+        unstack = partial(self.unstack_batches, batch_size=batch_size, n_news=n_news)
+
+        return news, unstack
+
+    @staticmethod
+    def unstack_batches(news_vectors, batch_size, n_news):
+        return news_vectors.reshape(batch_size, n_news, -1)
+
+    def forward(self, news: dict[str, torch.Tensor]) -> torch.Tensor:
         """
         Args:
-            news: batch_size * num_words_title
+            news: [
+                {
+                    "title": batch_size * num_words_title
+                }
+            ]
         Returns:
             (shape) batch_size, num_filters
         """
+        titles = news["title"].to(self.device)
+
+        has_multiple_news = titles.dim() == 3
+        if has_multiple_news:
+            titles, unstack = self.stack_batches(titles)
+
         # batch_size, num_words_title, word_embedding_dim
         title_vector = F.dropout(
-            self.word_embedding(news),
+            self.word_embedding(titles),
             p=self.dropout_probability,
             training=self.training,
         )
@@ -70,5 +96,8 @@ class NewsEncoder(nn.Module):
         weighted_title_vector = self.title_attention(
             activated_title_vector.transpose(1, 2)
         )
+
+        if has_multiple_news:
+            weighted_title_vector = unstack(weighted_title_vector)  # type:ignore
 
         return weighted_title_vector

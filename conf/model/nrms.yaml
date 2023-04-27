@@ -4,6 +4,7 @@ defaults:
 
 model:
   _target_: models.NRMS.NRMS
+  num_attention_heads: 15
 
 news_encoder:
   _target_: models.NRMS.news_encoder.NewsEncoder

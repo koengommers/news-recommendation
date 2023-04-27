@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Optional
 
 import torch
@@ -50,8 +51,37 @@ class NewsEncoder(nn.Module):
                 query_vector_dim, bert_config.hidden_size
             )
 
-    def forward(self, news: dict[str, torch.Tensor]) -> torch.Tensor:
-        bert_output = self.bert_model(**news)
+    @property
+    def device(self) -> torch.device:
+        return next(self.parameters()).device
+
+    def stack_batches(self, news):
+        batch_size, n_news, num_words = news["input_ids"].size()
+        for key in news:
+            news[key] = news[key].reshape(-1, num_words)
+
+        unstack = partial(self.unstack_batches, batch_size=batch_size, n_news=n_news)
+
+        return news, unstack
+
+    @staticmethod
+    def unstack_batches(news_vectors, batch_size, n_news):
+        return news_vectors.reshape(batch_size, n_news, -1)
+
+    def forward(self, news: dict[str, dict[str, torch.Tensor]]) -> torch.Tensor:
+        # batch size, n news, num words
+        # or
+        # batch size, num words
+        titles = news["title"]
+
+        has_multiple_news = titles["input_ids"].dim() == 3
+        if has_multiple_news:
+            titles, unstack = self.stack_batches(titles)
+
+        for key in titles:
+            titles[key] = titles[key].to(self.device)
+
+        bert_output = self.bert_model(**titles)
         last_hidden_state = F.dropout(
             bert_output.last_hidden_state,
             p=self.dropout_probability,
@@ -59,10 +89,15 @@ class NewsEncoder(nn.Module):
         )
 
         if self.pooling_method == "attention":
-            return self.additive_attention(last_hidden_state)
+            news_vectors = self.additive_attention(last_hidden_state)
         elif self.pooling_method == "average":
-            return last_hidden_state.mean(dim=1)
+            news_vectors = last_hidden_state.mean(dim=1)
         elif self.pooling_method == "pooler":
-            return bert_output.pooler_output
+            news_vectors = bert_output.pooler_output
         else:
             raise ValueError("Unknown pooling method")
+
+        if has_multiple_news:
+            news_vectors = unstack(news_vectors)  # type:ignore
+
+        return news_vectors

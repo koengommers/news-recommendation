@@ -74,31 +74,11 @@ class MINER(nn.Module):
         labels: torch.Tensor,
         mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-        batch_size, n_candidate_news, num_words = candidate_news["title"][
-            "input_ids"
-        ].size()
-        for key in candidate_news["title"]:
-            candidate_news["title"][key] = candidate_news["title"][key].reshape(
-                -1, num_words
-            )
-
         # batch_size, 1 + K, hidden_size
-        candidate_news_vector = self.get_news_vector(candidate_news).reshape(
-            batch_size, n_candidate_news, -1
-        )
+        candidate_news_vector = self.get_news_vector(candidate_news)
 
         # batch_size, num_clicked_news_a_user, hidden_size
-        batch_size, history_length, num_words = clicked_news["title"][
-            "input_ids"
-        ].size()
-        for key in clicked_news["title"]:
-            clicked_news["title"][key] = clicked_news["title"][key].reshape(
-                -1, num_words
-            )
-
-        clicked_news_vector = self.get_news_vector(clicked_news).reshape(
-            batch_size, history_length, -1
-        )
+        clicked_news_vector = self.get_news_vector(clicked_news)
 
         # batch_size, n_interest_vectors, hidden_size
         user_vectors = self.get_user_vector(clicked_news_vector, mask)
@@ -117,10 +97,7 @@ class MINER(nn.Module):
         return loss
 
     def get_news_vector(self, news: dict[str, dict[str, torch.Tensor]]) -> torch.Tensor:
-        news_titles = news["title"]
-        for key in news_titles:
-            news_titles[key] = news_titles[key].to(self.device)
-        return self.news_encoder(news_titles)
+        return self.news_encoder(news)
 
     def get_user_vector(
         self, clicked_news_vector: torch.Tensor, mask: Optional[torch.Tensor] = None

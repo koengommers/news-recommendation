@@ -24,7 +24,9 @@ class TANR(torch.nn.Module):
         self.news_encoder = news_encoder
         self.user_encoder = UserEncoder()
         self.num_categories = dataset.num_categories
-        self.topic_predictor = nn.Linear(news_encoder.embedding_dim, self.num_categories)
+        self.topic_predictor = nn.Linear(
+            news_encoder.embedding_dim, self.num_categories
+        )
         self.loss_fn = nn.CrossEntropyLoss()
 
     @property
@@ -33,8 +35,8 @@ class TANR(torch.nn.Module):
 
     def forward(
         self,
-        candidate_news: dict[str, torch.Tensor],
-        clicked_news: dict[str, torch.Tensor],
+        candidate_news,
+        clicked_news,
         labels: torch.Tensor,
         mask: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
@@ -58,22 +60,15 @@ class TANR(torch.nn.Module):
             click_probability: batch_size, 1 + K
             topic_classification_loss: 0-dim tensor
         """
-        batch_size, n_candidate_news, num_words = candidate_news["title"].size()
-        candidate_news["title"] = candidate_news["title"].reshape(-1, num_words)
-        # batch_size, 1 + K, word_embedding_dim
-        candidate_news_vector = self.get_news_vector(candidate_news).reshape(
-            batch_size, n_candidate_news, -1
-        )
+        # batch_size, 1 + K, hidden_size
+        candidate_news_vector = self.get_news_vector(candidate_news)
 
-        batch_size, history_length, num_words = clicked_news["title"].size()
-        clicked_news["title"] = clicked_news["title"].reshape(-1, num_words)
-        # batch_size, num_clicked_news_a_user, word_embedding_dim
-        clicked_news_vector = self.get_news_vector(clicked_news).reshape(
-            batch_size, history_length, -1
-        )
+        # batch_size, num_clicked_news_a_user, hidden_size
+        clicked_news_vector = self.get_news_vector(clicked_news)
 
-        # batch_size, num_filters
+        # batch_size, hidden_size
         user_vector = self.get_user_vector(clicked_news_vector, mask)
+
         # batch_size, 1 + K
         click_probability = self.get_prediction(candidate_news_vector, user_vector)
 
