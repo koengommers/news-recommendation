@@ -3,9 +3,7 @@ from typing import Optional
 import torch
 import torch.nn as nn
 
-from models.TANR.news_encoder import NewsEncoder
 from models.TANR.user_encoder import UserEncoder
-from utils.data import load_pretrained_embeddings
 
 
 class TANR(torch.nn.Module):
@@ -16,34 +14,17 @@ class TANR(torch.nn.Module):
 
     def __init__(
         self,
+        news_encoder,
         dataset,
-        word_embedding_dim: int = 300,
-        use_pretrained_embeddings: bool = False,
-        freeze_pretrained_embeddings: bool = False,
-        window_size: int = 3,
-        num_filters: int = 300,
         topic_classification_loss_weight: float = 0.2,
     ):
         super(TANR, self).__init__()
-        self.num_filters = num_filters
-        self.num_categories = dataset.num_categories
         self.topic_classification_loss_weight = topic_classification_loss_weight
 
-        pretrained_embeddings = (
-            load_pretrained_embeddings(dataset.tokenizer.t2i)
-            if use_pretrained_embeddings
-            else None
-        )
-        self.news_encoder = NewsEncoder(
-            dataset.num_words,
-            word_embedding_dim,
-            pretrained_embeddings,
-            freeze_pretrained_embeddings,
-            window_size=window_size,
-            num_filters=num_filters,
-        )
-        self.user_encoder = UserEncoder(num_filters=num_filters)
-        self.topic_predictor = nn.Linear(num_filters, self.num_categories)
+        self.news_encoder = news_encoder
+        self.user_encoder = UserEncoder()
+        self.num_categories = dataset.num_categories
+        self.topic_predictor = nn.Linear(news_encoder.embedding_dim, self.num_categories)
         self.loss_fn = nn.CrossEntropyLoss()
 
     @property
@@ -99,7 +80,7 @@ class TANR(torch.nn.Module):
         # batch_size * (1 + K + num_clicked_news_a_user), num_categories
         y_pred = self.topic_predictor(
             torch.cat((candidate_news_vector, clicked_news_vector), dim=1).view(
-                -1, self.num_filters
+                -1, self.news_encoder.embedding_dim
             )
         )
         # batch_size * (1 + K + num_clicked_news_a_user)

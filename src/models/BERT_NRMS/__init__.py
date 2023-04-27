@@ -2,9 +2,7 @@ from typing import Optional
 
 import torch
 import torch.nn as nn
-from transformers import AutoConfig
 
-from models.modules.bert.news_encoder import NewsEncoder
 from models.NRMS.user_encoder import UserEncoder
 
 
@@ -16,18 +14,13 @@ class BERT_NRMS(nn.Module):
 
     def __init__(
         self,
+        news_encoder,
         dataset,
-        pretrained_model_name: str,
-        bert_pooling_method: str = "attention",
-        num_hidden_layers: Optional[int] = None,
     ):
         super(BERT_NRMS, self).__init__()
-        self.bert_config = AutoConfig.from_pretrained(pretrained_model_name)
-        self.news_encoder = NewsEncoder(
-            self.bert_config, bert_pooling_method, num_hidden_layers=num_hidden_layers
-        )
+        self.news_encoder = news_encoder
         self.user_encoder = UserEncoder(
-            self.bert_config.hidden_size, num_attention_heads=16
+            news_encoder.embedding_dim, num_attention_heads=16
         )
         self.loss_fn = nn.CrossEntropyLoss()
 

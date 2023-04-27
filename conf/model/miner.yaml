@@ -4,11 +4,15 @@ defaults:
 
 model:
   _target_: models.MINER.MINER
-  pretrained_model_name: bert-base-uncased
   n_interest_vectors: 32
-  bert_pooling_method: pooler
   aggregate_method: weighted
   disagreement_loss_weight: 0.8
+
+news_encoder:
+  _target_: models.modules.bert.news_encoder.NewsEncoder
+  pretrained_model_name: bert-base-uncased
+  pooling_method: pooler
+  finetune_n_last_layers: -1
 
 features:
   - title

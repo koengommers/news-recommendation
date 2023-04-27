@@ -11,12 +11,12 @@ class UserEncoder(nn.Module):
         self,
         n_interest_vectors: int = 32,
         query_vector_dim: int = 200,
-        word_embedding_dim: int = 768,
+        news_embedding_dim: int = 768,
     ) -> None:
         super(UserEncoder, self).__init__()
         self.additive_attentions = nn.ModuleList(
             [
-                AdditiveAttention(query_vector_dim, word_embedding_dim)
+                AdditiveAttention(query_vector_dim, news_embedding_dim)
                 for _ in range(n_interest_vectors)
             ]
         )

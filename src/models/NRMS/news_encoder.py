@@ -1,19 +1,18 @@
-from typing import Optional
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 from models.modules.attention.additive import AdditiveAttention
 from models.modules.attention.multihead_self import MultiHeadSelfAttention
+from utils.data import load_pretrained_embeddings
 
 
 class NewsEncoder(nn.Module):
     def __init__(
         self,
-        num_words: int,
+        dataset,
         word_embedding_dim: int = 300,
-        pretrained_embeddings: Optional[torch.Tensor] = None,
+        use_pretrained_embeddings: bool = False,
         freeze_pretrained_embeddings: bool = False,
         dropout_probability: float = 0.2,
         num_attention_heads: int = 15,
@@ -21,8 +20,10 @@ class NewsEncoder(nn.Module):
     ):
         super(NewsEncoder, self).__init__()
         self.dropout_probability = dropout_probability
+        self.embedding_dim = 300
 
-        if pretrained_embeddings is not None:
+        if use_pretrained_embeddings:
+            pretrained_embeddings = load_pretrained_embeddings(dataset.tokenizer.t2i)
             self.word_embedding = nn.Embedding.from_pretrained(
                 pretrained_embeddings,
                 freeze=freeze_pretrained_embeddings,
@@ -30,7 +31,7 @@ class NewsEncoder(nn.Module):
             )
         else:
             self.word_embedding = nn.Embedding(
-                num_words, word_embedding_dim, padding_idx=0
+                dataset.num_words, word_embedding_dim, padding_idx=0
             )
 
         self.multihead_self_attention = MultiHeadSelfAttention(

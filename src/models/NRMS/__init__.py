@@ -3,9 +3,7 @@ from typing import Optional
 import torch
 import torch.nn as nn
 
-from models.NRMS.news_encoder import NewsEncoder
 from models.NRMS.user_encoder import UserEncoder
-from utils.data import load_pretrained_embeddings
 
 
 class NRMS(nn.Module):
@@ -16,24 +14,12 @@ class NRMS(nn.Module):
 
     def __init__(
         self,
+        news_encoder,
         dataset,
-        word_embedding_dim: int = 300,
-        use_pretrained_embeddings: bool = False,
-        freeze_pretrained_embeddings: bool = False,
     ):
         super(NRMS, self).__init__()
-        pretrained_embeddings = (
-            load_pretrained_embeddings(dataset.tokenizer.t2i)
-            if use_pretrained_embeddings
-            else None
-        )
-        self.news_encoder = NewsEncoder(
-            dataset.num_words,
-            word_embedding_dim,
-            pretrained_embeddings,
-            freeze_pretrained_embeddings,
-        )
-        self.user_encoder = UserEncoder(word_embedding_dim)
+        self.news_encoder = news_encoder
+        self.user_encoder = UserEncoder(news_encoder.embedding_dim)
         self.loss_fn = nn.CrossEntropyLoss()
 
     @property

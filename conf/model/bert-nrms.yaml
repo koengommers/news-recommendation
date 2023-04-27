@@ -4,9 +4,13 @@ defaults:
 
 model:
   _target_: models.BERT_NRMS.BERT_NRMS
+
+news_encoder:
+  _target_: models.modules.bert.news_encoder.NewsEncoder
   pretrained_model_name: bert-base-uncased
-  bert_pooling_method: attention
+  pooling_method: attention
   num_hidden_layers: 8
+  finetune_n_last_layers: 2
 
 features:
   - title

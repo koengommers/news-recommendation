@@ -3,10 +3,8 @@ from typing import Optional
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from transformers import AutoConfig
 
 from models.MINER.user_encoder import UserEncoder
-from models.modules.bert.news_encoder import NewsEncoder
 
 
 class TargetAwareAttention(nn.Module):
@@ -46,10 +44,9 @@ class MINER(nn.Module):
 
     def __init__(
         self,
+        news_encoder,
         dataset,
-        pretrained_model_name: str,
         n_interest_vectors: int = 32,
-        bert_pooling_method: str = "pooler",
         aggregate_method: str = "weighted",
         disagreement_loss_weight: float = 0.8,
     ):
@@ -57,17 +54,14 @@ class MINER(nn.Module):
         self.aggregate_method = aggregate_method
         self.disagreement_loss_weight = disagreement_loss_weight
 
-        self.bert_config = AutoConfig.from_pretrained(pretrained_model_name)
-        self.news_encoder = NewsEncoder(
-            self.bert_config, bert_pooling_method, finetune_n_last_layers=-1
-        )
+        self.news_encoder = news_encoder
         self.user_encoder = UserEncoder(
-            n_interest_vectors, word_embedding_dim=self.bert_config.hidden_size
+            n_interest_vectors, news_embedding_dim=news_encoder.embedding_dim
         )
         self.loss_fn = nn.CrossEntropyLoss()
 
         if aggregate_method == "weighted":
-            self.score_aggregator = TargetAwareAttention(self.bert_config.hidden_size)
+            self.score_aggregator = TargetAwareAttention(news_encoder.embedding_dim)
 
     @property
     def device(self) -> torch.device:

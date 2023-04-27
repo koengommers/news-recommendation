@@ -44,8 +44,11 @@ def main(cfg: DictConfig) -> None:
         num_workers=cfg.num_workers,
     )
 
-    # Init model, dataset needs to be passed for number of words and categories
-    model = hydra.utils.instantiate(cfg.model, dataset).to(device)
+    # Init news encoder
+    news_encoder = hydra.utils.instantiate(cfg.news_encoder, dataset)
+
+    # Init model
+    model = hydra.utils.instantiate(cfg.model, news_encoder, dataset).to(device)
 
     # Init optimizer
     optimizer = hydra.utils.instantiate(cfg.optimizer, params=model.parameters())

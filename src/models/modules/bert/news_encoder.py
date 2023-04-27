@@ -3,7 +3,7 @@ from typing import Optional
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from transformers import AutoModel, PretrainedConfig
+from transformers import AutoConfig, AutoModel
 
 from models.modules.attention.additive import AdditiveAttention
 
@@ -11,7 +11,8 @@ from models.modules.attention.additive import AdditiveAttention
 class NewsEncoder(nn.Module):
     def __init__(
         self,
-        bert_config: PretrainedConfig,
+        dataset,
+        pretrained_model_name: str = "bert-base-uncased",
         pooling_method: str = "attention",
         dropout_probability: float = 0.2,
         query_vector_dim: int = 200,
@@ -20,8 +21,11 @@ class NewsEncoder(nn.Module):
     ):
         super(NewsEncoder, self).__init__()
         self.dropout_probability = dropout_probability
+
+        bert_config = AutoConfig.from_pretrained(pretrained_model_name)
         if num_hidden_layers is not None:
             bert_config.num_hidden_layers = num_hidden_layers
+        self.embedding_dim = bert_config.hidden_size
         self.bert_model = AutoModel.from_config(bert_config)
 
         assert pooling_method in ["attention", "average", "pooler"]

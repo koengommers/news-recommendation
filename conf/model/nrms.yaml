@@ -4,6 +4,9 @@ defaults:
 
 model:
   _target_: models.NRMS.NRMS
+
+news_encoder:
+  _target_: models.NRMS.news_encoder.NewsEncoder
   word_embedding_dim: 300
   use_pretrained_embeddings: true
   freeze_pretrained_embeddings: false

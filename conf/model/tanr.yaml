@@ -4,12 +4,15 @@ defaults:
 
 model:
   _target_: models.TANR.TANR
+  topic_classification_loss_weight: 0.2
+
+news_encoder:
+  _target_: models.TANR.news_encoder.NewsEncoder
   word_embedding_dim: 300
   use_pretrained_embeddings: true
   freeze_pretrained_embeddings: false
   window_size: 3
   num_filters: 300
-  topic_classification_loss_weight: 0.2
 
 features:
   - title
