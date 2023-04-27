@@ -18,7 +18,7 @@ class TANR(torch.nn.Module):
         self,
         dataset,
         word_embedding_dim: int = 300,
-        use_pretrained_embeddings: bool = True,
+        use_pretrained_embeddings: bool = False,
         freeze_pretrained_embeddings: bool = False,
         window_size: int = 3,
         num_filters: int = 300,
@@ -26,7 +26,7 @@ class TANR(torch.nn.Module):
     ):
         super(TANR, self).__init__()
         self.num_filters = num_filters
-        self.num_categories = dataset.categorical_encoders["category"].n_categories + 1
+        self.num_categories = dataset.num_categories
         self.topic_classification_loss_weight = topic_classification_loss_weight
 
         pretrained_embeddings = (
@@ -35,7 +35,7 @@ class TANR(torch.nn.Module):
             else None
         )
         self.news_encoder = NewsEncoder(
-            dataset.tokenizer.vocab_size + 1,
+            dataset.num_words,
             word_embedding_dim,
             pretrained_embeddings,
             freeze_pretrained_embeddings,

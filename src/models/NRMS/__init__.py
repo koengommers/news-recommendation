@@ -18,7 +18,7 @@ class NRMS(nn.Module):
         self,
         dataset,
         word_embedding_dim: int = 300,
-        use_pretrained_embeddings: bool = True,
+        use_pretrained_embeddings: bool = False,
         freeze_pretrained_embeddings: bool = False,
     ):
         super(NRMS, self).__init__()
@@ -28,7 +28,7 @@ class NRMS(nn.Module):
             else None
         )
         self.news_encoder = NewsEncoder(
-            dataset.tokenizer.vocab_size + 1,
+            dataset.num_words,
             word_embedding_dim,
             pretrained_embeddings,
             freeze_pretrained_embeddings,

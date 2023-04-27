@@ -53,6 +53,14 @@ class RecommenderTrainingDataset(Dataset):
         print("Loading logs...")
         self.logs = self.prepare_logs()
 
+    @property
+    def num_words(self) -> int:
+        return self.tokenizer.vocab_size + 1
+
+    @property
+    def num_categories(self) -> int:
+        return self.categorical_encoders["category"].n_categories + 1
+
     def prepare_logs(self) -> pd.DataFrame:
         behaviors = load_behaviors(self.mind_variant, splits=[self.split])
 

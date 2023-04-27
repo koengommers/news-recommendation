@@ -10,11 +10,11 @@ if src_path not in sys.path:
 from src.models.BERT_NRMS import BERT_NRMS
 
 
-def test_news_encoding():
+def test_news_encoding(dataset):
     BATCH_SIZE = 4
     TITLE_LENGTH = 20
 
-    model = BERT_NRMS("bert-base-uncased")
+    model = BERT_NRMS(dataset, "bert-base-uncased")
 
     news_article = {
         "title": {
@@ -33,11 +33,11 @@ def test_news_encoding():
     assert news_vector.shape == (BATCH_SIZE, model.bert_config.hidden_size)
 
 
-def test_user_encoding():
+def test_user_encoding(dataset):
     BATCH_SIZE = 4
     N_CLICKED_NEWS = 50
 
-    model = BERT_NRMS("bert-base-uncased")
+    model = BERT_NRMS(dataset, "bert-base-uncased")
 
     clicked_news_vector = torch.rand(
         (BATCH_SIZE, N_CLICKED_NEWS, model.bert_config.hidden_size)
@@ -48,11 +48,11 @@ def test_user_encoding():
     assert user_vector.shape == (BATCH_SIZE, model.bert_config.hidden_size)
 
 
-def test_predicting():
+def test_predicting(dataset):
     BATCH_SIZE = 4
     N_CANDIDATE_NEWS = 5
 
-    model = BERT_NRMS("bert-base-uncased")
+    model = BERT_NRMS(dataset, "bert-base-uncased")
 
     news_vector = torch.rand((BATCH_SIZE, N_CANDIDATE_NEWS, model.bert_config.hidden_size))
     user_vector = torch.rand((BATCH_SIZE, model.bert_config.hidden_size))
@@ -62,13 +62,13 @@ def test_predicting():
     assert prediction.shape == (BATCH_SIZE, N_CANDIDATE_NEWS)
 
 
-def test_forward_pass():
+def test_forward_pass(dataset):
     BATCH_SIZE = 4
     TITLE_LENGTH = 20
     N_CANDIDATE_NEWS = 5
     N_CLICKED_NEWS = 50
 
-    model = BERT_NRMS("bert-base-uncased")
+    model = BERT_NRMS(dataset, "bert-base-uncased")
 
     candidate_news = {
         "title": {

@@ -8,7 +8,7 @@ model:
   n_interest_vectors: 32
   bert_pooling_method: pooler
   aggregate_method: weighted
-  disagremeent_loss_weight: 0.8
+  disagreement_loss_weight: 0.8
 
 features:
   - title

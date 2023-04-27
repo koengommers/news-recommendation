@@ -10,18 +10,16 @@ if src_path not in sys.path:
 from src.models.TANR import TANR
 
 
-def test_news_encoding():
-    NUM_WORDS = 1000
-    NUM_CATEGORIES = 20
+def test_news_encoding(dataset):
     WORD_EMBEDDING_DIM = 300
     BATCH_SIZE = 16
     TITLE_LENGTH = 20
 
-    model = TANR(NUM_WORDS, NUM_CATEGORIES, WORD_EMBEDDING_DIM)
+    model = TANR(dataset, WORD_EMBEDDING_DIM)
 
     news_article = {
-        "title": torch.randint(0, NUM_WORDS, (BATCH_SIZE, TITLE_LENGTH)),
-        "category": torch.randint(0, NUM_CATEGORIES, (BATCH_SIZE,)),
+        "title": torch.randint(0, dataset.num_words, (BATCH_SIZE, TITLE_LENGTH)),
+        "category": torch.randint(0, dataset.num_categories, (BATCH_SIZE,)),
     }
 
     news_vector = model.get_news_vector(news_article)
@@ -29,14 +27,12 @@ def test_news_encoding():
     assert news_vector.shape == (BATCH_SIZE, WORD_EMBEDDING_DIM)
 
 
-def test_user_encoding():
-    NUM_WORDS = 1000
-    NUM_CATEGORIES = 20
+def test_user_encoding(dataset):
     WORD_EMBEDDING_DIM = 300
     BATCH_SIZE = 16
     N_CLICKED_NEWS = 50
 
-    model = TANR(NUM_WORDS, NUM_CATEGORIES, WORD_EMBEDDING_DIM)
+    model = TANR(dataset, WORD_EMBEDDING_DIM)
 
     clicked_news_vector = torch.rand((BATCH_SIZE, N_CLICKED_NEWS, WORD_EMBEDDING_DIM))
 
@@ -45,14 +41,12 @@ def test_user_encoding():
     assert user_vector.shape == (BATCH_SIZE, WORD_EMBEDDING_DIM)
 
 
-def test_predicting():
-    NUM_WORDS = 1000
-    NUM_CATEGORIES = 20
+def test_predicting(dataset):
     WORD_EMBEDDING_DIM = 300
     BATCH_SIZE = 16
     N_CANDIDATE_NEWS = 5
 
-    model = TANR(NUM_WORDS, NUM_CATEGORIES, WORD_EMBEDDING_DIM)
+    model = TANR(dataset, WORD_EMBEDDING_DIM)
 
     news_vector = torch.rand((BATCH_SIZE, N_CANDIDATE_NEWS, WORD_EMBEDDING_DIM))
     user_vector = torch.rand((BATCH_SIZE, WORD_EMBEDDING_DIM))
@@ -62,28 +56,26 @@ def test_predicting():
     assert prediction.shape == (BATCH_SIZE, N_CANDIDATE_NEWS)
 
 
-def test_forward_pass():
-    NUM_WORDS = 1000
-    NUM_CATEGORIES = 20
+def test_forward_pass(dataset):
     WORD_EMBEDDING_DIM = 300
     BATCH_SIZE = 16
     TITLE_LENGTH = 20
     N_CANDIDATE_NEWS = 5
     N_CLICKED_NEWS = 50
 
-    model = TANR(NUM_WORDS, NUM_CATEGORIES, WORD_EMBEDDING_DIM)
+    model = TANR(dataset, WORD_EMBEDDING_DIM)
 
     candidate_news = {
         "title": torch.randint(
-            0, NUM_WORDS, (BATCH_SIZE, N_CANDIDATE_NEWS, TITLE_LENGTH)
+            0, dataset.num_words, (BATCH_SIZE, N_CANDIDATE_NEWS, TITLE_LENGTH)
         ),
-        "category": torch.randint(0, NUM_CATEGORIES, (BATCH_SIZE, N_CANDIDATE_NEWS)),
+        "category": torch.randint(0, dataset.num_categories, (BATCH_SIZE, N_CANDIDATE_NEWS)),
     }
     clicked_news = {
         "title": torch.randint(
-            0, NUM_WORDS, (BATCH_SIZE, N_CLICKED_NEWS, TITLE_LENGTH)
+            0, dataset.num_words, (BATCH_SIZE, N_CLICKED_NEWS, TITLE_LENGTH)
         ),
-        "category": torch.randint(0, NUM_CATEGORIES, (BATCH_SIZE, N_CLICKED_NEWS)),
+        "category": torch.randint(0, dataset.num_categories, (BATCH_SIZE, N_CLICKED_NEWS)),
     }
     labels = torch.zeros(BATCH_SIZE).long()
     loss = model(candidate_news, clicked_news, labels)
