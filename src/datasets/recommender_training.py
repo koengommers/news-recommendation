@@ -1,11 +1,12 @@
 import random
-from typing import Callable, Union
+from typing import Union
 
 import pandas as pd
 from torch.utils.data import Dataset
 
 from utils.data import load_behaviors, load_news
 from utils.encode import CategoricalEncoder
+from utils.tokenize import BertTokenizer, NltkTokenizer
 
 
 def filter_positive_samples(impressions: list[str]) -> list[str]:
@@ -16,6 +17,7 @@ def filter_negative_samples(impressions: list[str]) -> list[str]:
     return [sample[:-2] for sample in impressions if sample.endswith("-0")]
 
 
+Tokenizer = Union[NltkTokenizer, BertTokenizer]
 TokenizerOutput = Union[list[int], dict[str, list[int]]]
 NewsItem = dict[str, Union[TokenizerOutput, int]]
 
@@ -29,7 +31,7 @@ class RecommenderTrainingDataset(Dataset):
     def __init__(
         self,
         mind_variant: str,
-        tokenizer: Callable[[str, int], TokenizerOutput],
+        tokenizer: Tokenizer,
         negative_sampling_ratio: int = 4,
         num_words_title: int = 20,
         num_words_abstract: int = 50,

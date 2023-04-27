@@ -1,5 +1,5 @@
 from nltk.tokenize import word_tokenize
-from transformers import AutoTokenizer
+from transformers import AutoConfig, AutoTokenizer
 
 
 class NltkTokenizer:
@@ -38,6 +38,11 @@ class BertTokenizer:
 
     def eval(self):
         pass
+
+    @property
+    def vocab_size(self):
+        config = AutoConfig.from_pretrained(self.pretrained_model_name)
+        return config.vocab_size
 
     def __call__(self, text: str, length: int) -> dict[str, list[int]]:
         return dict(
