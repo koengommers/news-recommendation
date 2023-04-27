@@ -29,7 +29,6 @@ class RecommenderTrainingDataset(Dataset):
     def __init__(
         self,
         mind_variant: str,
-        split: str,
         tokenizer: Callable[[str, int], TokenizerOutput],
         negative_sampling_ratio: int = 4,
         num_words_title: int = 20,
@@ -39,7 +38,7 @@ class RecommenderTrainingDataset(Dataset):
         categorical_encoders: dict[str, CategoricalEncoder] = {},
     ):
         self.mind_variant = mind_variant
-        self.split = split
+        self.split = "train"
         self.tokenizer = tokenizer
         self.negative_sampling_ratio = negative_sampling_ratio
         self.num_words_title = num_words_title

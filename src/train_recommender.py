@@ -45,7 +45,6 @@ def main(cfg: DictConfig) -> None:
     news_features = required_news_features[cfg.model.architecture]
     dataset = RecommenderTrainingDataset(
         cfg.mind_variant,
-        "train",
         tokenizer,
         cfg.negative_sampling_ratio,
         cfg.num_words_title,
