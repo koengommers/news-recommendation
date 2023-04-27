@@ -1,0 +1,18 @@
+# @package _global_
+defaults:
+  - /tokenizer: nltk
+
+model:
+  _target_: models.MINER.MINER
+  n_interest_vectors: 32
+  aggregate_method: weighted
+  disagreement_loss_weight: 0.8
+
+news_encoder:
+  _target_: models.NRMS.news_encoder.NewsEncoder
+  word_embedding_dim: 300
+  use_pretrained_embeddings: true
+  freeze_pretrained_embeddings: false
+
+features:
+  - title
