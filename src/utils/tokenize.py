@@ -36,6 +36,9 @@ class BertTokenizer:
         self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name)
         self.pretrained_model_name = pretrained_model_name
 
+    def eval(self):
+        pass
+
     def __call__(self, text: str, length: int) -> dict[str, list[int]]:
         return dict(
             self.tokenizer(

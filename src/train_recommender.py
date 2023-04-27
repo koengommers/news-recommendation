@@ -130,11 +130,8 @@ def main(cfg: DictConfig) -> None:
         )
 
         # Evaluate
-        if isinstance(tokenizer, NltkTokenizer):
-            tokenizer.eval()
-
         metrics = evaluate(
-            model, "dev", tokenize, dataset.categorical_encoders, news_features, cfg
+            model, "dev", tokenizer, dataset.categorical_encoders, news_features, cfg
         )
 
         tqdm.write(

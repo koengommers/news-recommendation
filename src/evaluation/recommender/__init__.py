@@ -41,17 +41,18 @@ def calculate_metrics(result):
 def evaluate(
     model: Union[NRMS, TANR, BERT_NRMS, MINER],
     split: str,
-    tokenize: Callable[[str, int], TokenizerOutput],
+    tokenizer: Callable[[str, int], TokenizerOutput],
     categorical_encoders: dict[str, CategoricalEncoder],
     news_features: list[str],
     cfg: DictConfig,
 ) -> dict[str, np.floating]:
     model.eval()
+    tokenizer.eval()
 
     news_dataset = NewsDataset(
         cfg.mind_variant,
         split,
-        tokenize,
+        tokenizer,
         cfg.num_words_title,
         cfg.num_words_abstract,
         categorical_encoders,
