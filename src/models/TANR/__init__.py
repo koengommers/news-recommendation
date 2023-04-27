@@ -5,6 +5,7 @@ import torch.nn as nn
 
 from models.TANR.news_encoder import NewsEncoder
 from models.TANR.user_encoder import UserEncoder
+from utils.data import load_pretrained_embeddings
 
 
 class TANR(torch.nn.Module):
@@ -15,10 +16,9 @@ class TANR(torch.nn.Module):
 
     def __init__(
         self,
-        num_words: int,
-        num_categories: int,
+        dataset,
         word_embedding_dim: int = 300,
-        pretrained_embeddings: Optional[torch.Tensor] = None,
+        use_pretrained_embeddings: bool = False,
         freeze_pretrained_embeddings: bool = False,
         window_size: int = 3,
         num_filters: int = 300,
@@ -26,11 +26,16 @@ class TANR(torch.nn.Module):
     ):
         super(TANR, self).__init__()
         self.num_filters = num_filters
-        self.num_categories = num_categories
+        self.num_categories = dataset.num_categories
         self.topic_classification_loss_weight = topic_classification_loss_weight
 
+        pretrained_embeddings = (
+            load_pretrained_embeddings(dataset.tokenizer.t2i)
+            if use_pretrained_embeddings
+            else None
+        )
         self.news_encoder = NewsEncoder(
-            num_words,
+            dataset.num_words,
             word_embedding_dim,
             pretrained_embeddings,
             freeze_pretrained_embeddings,
@@ -38,7 +43,7 @@ class TANR(torch.nn.Module):
             num_filters=num_filters,
         )
         self.user_encoder = UserEncoder(num_filters=num_filters)
-        self.topic_predictor = nn.Linear(num_filters, num_categories)
+        self.topic_predictor = nn.Linear(num_filters, self.num_categories)
         self.loss_fn = nn.CrossEntropyLoss()
 
     @property

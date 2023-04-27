@@ -1,6 +1,14 @@
-architecture: MINER
-n_interest_vectors: 32
-pretrained_model_name: bert-base-uncased
-bert_pooling_method: pooler
-aggregate_method: weighted
-disagremeent_loss_weight: 0.8
+# @package _global_
+defaults:
+  - /tokenizer: bert
+
+model:
+  _target_: models.MINER.MINER
+  pretrained_model_name: bert-base-uncased
+  n_interest_vectors: 32
+  bert_pooling_method: pooler
+  aggregate_method: weighted
+  disagreement_loss_weight: 0.8
+
+features:
+  - title

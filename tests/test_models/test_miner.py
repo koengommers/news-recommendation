@@ -10,12 +10,12 @@ if src_path not in sys.path:
 from src.models.MINER import MINER
 
 
-def test_news_encoding():
+def test_news_encoding(dataset):
     BATCH_SIZE = 4
     TITLE_LENGTH = 20
     N_INTEREST_VECTORS = 32
 
-    model = MINER("bert-base-uncased", N_INTEREST_VECTORS)
+    model = MINER(dataset, "bert-base-uncased", N_INTEREST_VECTORS)
 
     news_article = {
         "title": {
@@ -34,12 +34,12 @@ def test_news_encoding():
     assert news_vector.shape == (BATCH_SIZE, model.bert_config.hidden_size)
 
 
-def test_user_encoding():
+def test_user_encoding(dataset):
     BATCH_SIZE = 4
     N_CLICKED_NEWS = 50
     N_INTEREST_VECTORS = 32
 
-    model = MINER("bert-base-uncased", N_INTEREST_VECTORS)
+    model = MINER(dataset, "bert-base-uncased", N_INTEREST_VECTORS)
 
     clicked_news_vector = torch.rand(
         (BATCH_SIZE, N_CLICKED_NEWS, model.bert_config.hidden_size)
@@ -50,12 +50,12 @@ def test_user_encoding():
     assert user_vectors.shape == (BATCH_SIZE, N_INTEREST_VECTORS, model.bert_config.hidden_size)
 
 
-def test_predicting():
+def test_predicting(dataset):
     BATCH_SIZE = 4
     N_CANDIDATE_NEWS = 5
     N_INTEREST_VECTORS = 32
 
-    model = MINER("bert-base-uncased", N_INTEREST_VECTORS)
+    model = MINER(dataset, "bert-base-uncased", N_INTEREST_VECTORS)
 
     news_vector = torch.rand((BATCH_SIZE, N_CANDIDATE_NEWS, model.bert_config.hidden_size))
     user_vectors = torch.rand((BATCH_SIZE, N_INTEREST_VECTORS, model.bert_config.hidden_size))
@@ -65,14 +65,14 @@ def test_predicting():
     assert prediction.shape == (BATCH_SIZE, N_CANDIDATE_NEWS)
 
 
-def test_forward_pass():
+def test_forward_pass(dataset):
     BATCH_SIZE = 4
     TITLE_LENGTH = 20
     N_CANDIDATE_NEWS = 5
     N_CLICKED_NEWS = 50
     N_INTEREST_VECTORS = 32
 
-    model = MINER("bert-base-uncased", N_INTEREST_VECTORS)
+    model = MINER(dataset, "bert-base-uncased", N_INTEREST_VECTORS)
 
 
     candidate_news = {

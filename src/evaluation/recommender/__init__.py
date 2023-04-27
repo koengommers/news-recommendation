@@ -1,5 +1,5 @@
 from multiprocessing import Pool
-from typing import Callable, Union
+from typing import Union
 
 import numpy as np
 import torch
@@ -17,6 +17,7 @@ from models.NRMS import NRMS
 from models.TANR import TANR
 from utils.collate import collate_fn
 from utils.encode import CategoricalEncoder
+from utils.tokenize import BertTokenizer, NltkTokenizer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -41,21 +42,21 @@ def calculate_metrics(result):
 def evaluate(
     model: Union[NRMS, TANR, BERT_NRMS, MINER],
     split: str,
-    tokenize: Callable[[str, int], TokenizerOutput],
+    tokenizer: Union[NltkTokenizer, BertTokenizer],
     categorical_encoders: dict[str, CategoricalEncoder],
-    news_features: list[str],
     cfg: DictConfig,
 ) -> dict[str, np.floating]:
     model.eval()
+    tokenizer.eval()
 
     news_dataset = NewsDataset(
         cfg.mind_variant,
         split,
-        tokenize,
+        tokenizer,
         cfg.num_words_title,
         cfg.num_words_abstract,
         categorical_encoders,
-        news_features,
+        cfg.features,
     )
     news_dataloader = DataLoader(
         news_dataset,

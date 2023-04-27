@@ -1,0 +1,2 @@
+_target_: utils.tokenize.BertTokenizer
+pretrained_model_name: ${model.pretrained_model_name}

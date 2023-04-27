@@ -5,9 +5,11 @@ negative_sampling_ratio: 4
 num_words_title: 20
 num_words_abstract: 50
 history_length: 50
-learning_rate: 0.0001
 num_batches_show_loss: 100
 tqdm_disable: false
 mind_variant: "small"
 use_history_mask: true
 num_workers: 4
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 0.0001
