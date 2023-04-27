@@ -15,9 +15,9 @@ from models.BERT_NRMS import BERT_NRMS
 from models.MINER import MINER
 from models.NRMS import NRMS
 from models.TANR import TANR
-from utils.tokenize import BertTokenizer, NltkTokenizer
 from utils.collate import collate_fn
 from utils.encode import CategoricalEncoder
+from utils.tokenize import BertTokenizer, NltkTokenizer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
