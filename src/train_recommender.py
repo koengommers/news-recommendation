@@ -16,7 +16,6 @@ from models.NRMS import NRMS
 from models.TANR import TANR
 from utils.collate import collate_fn
 from utils.data import load_pretrained_embeddings
-from utils.tokenize import NltkTokenizer, BertTokenizer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -34,10 +33,7 @@ def main(cfg: DictConfig) -> None:
     torch.manual_seed(cfg.seed)
 
     # Set up tokenizer
-    if cfg.model.architecture in [Architecture.BERT_NRMS, Architecture.MINER]:
-        tokenizer = BertTokenizer(cfg.model.pretrained_model_name)
-    else:
-        tokenizer = NltkTokenizer()
+    tokenizer = hydra.utils.instantiate(cfg.tokenizer)
 
     # Load dataset
     required_news_features = {

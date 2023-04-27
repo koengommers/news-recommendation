@@ -1,4 +1,9 @@
-architecture: BERT-NRMS
-pretrained_model_name: bert-base-uncased
-bert_pooling_method: attention
-num_hidden_layers: 8
+# @package _global_
+defaults:
+  - /tokenizer: bert
+
+model:
+  architecture: BERT-NRMS
+  pretrained_model_name: bert-base-uncased
+  bert_pooling_method: attention
+  num_hidden_layers: 8

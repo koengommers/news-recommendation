@@ -36,7 +36,9 @@ class BertTokenizer:
         self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name)
         self.pretrained_model_name = pretrained_model_name
 
-    def __call__(self, text: str, length: int) -> list[int]:
-        return self.tokenizer(
-            text, max_length=length, padding="max_length", truncation=True
+    def __call__(self, text: str, length: int) -> dict[str, list[int]]:
+        return dict(
+            self.tokenizer(
+                text, max_length=length, padding="max_length", truncation=True
+            )
         )
