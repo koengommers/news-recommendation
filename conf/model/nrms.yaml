@@ -7,3 +7,6 @@ model:
   word_embedding_dim: 300
   use_pretrained_embeddings: true
   freeze_pretrained_embeddings: false
+
+features:
+  - title

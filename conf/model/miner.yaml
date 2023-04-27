@@ -9,3 +9,6 @@ model:
   bert_pooling_method: pooler
   aggregate_method: weighted
   disagremeent_loss_weight: 0.8
+
+features:
+  - title

@@ -36,13 +36,6 @@ def main(cfg: DictConfig) -> None:
     tokenizer = hydra.utils.instantiate(cfg.tokenizer)
 
     # Load dataset
-    required_news_features = {
-        Architecture.NRMS: ["title"],
-        Architecture.BERT_NRMS: ["title"],
-        Architecture.TANR: ["title", "category"],
-        Architecture.MINER: ["title"],
-    }
-    news_features = required_news_features[cfg.model.architecture]
     dataset = RecommenderTrainingDataset(
         cfg.mind_variant,
         tokenizer,
@@ -50,7 +43,7 @@ def main(cfg: DictConfig) -> None:
         cfg.num_words_title,
         cfg.num_words_abstract,
         cfg.history_length,
-        news_features,
+        cfg.features,
     )
     dataloader = DataLoader(
         dataset,

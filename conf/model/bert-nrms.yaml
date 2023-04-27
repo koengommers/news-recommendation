@@ -7,3 +7,6 @@ model:
   pretrained_model_name: bert-base-uncased
   bert_pooling_method: attention
   num_hidden_layers: 8
+
+features:
+  - category
