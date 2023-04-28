@@ -22,7 +22,7 @@ jobs:
 
       - name: Install dependencies
         run: poetry install --no-interaction
-        
+
       - name: Validate pyproject.toml
         run: poetry check
 
@@ -33,9 +33,9 @@ jobs:
 
       - name: Lint
         run: poetry run ruff src/
-        
+
       - name: Run mypy
         run: poetry run mypy src/
-        
+
       - name: Run tests
         run: poetry run pytest
