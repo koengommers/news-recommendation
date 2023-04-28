@@ -8,6 +8,13 @@ if src_path not in sys.path:
     sys.path.append(src_path)
 
 from src.models.TANR import TANR
+from src.models.TANR.news_encoder import NewsEncoder
+
+
+def init_model(dataset, word_embedding_dim):
+    news_encoder = NewsEncoder(dataset, word_embedding_dim)
+    model = TANR(news_encoder, dataset)
+    return model
 
 
 def test_news_encoding(dataset):
@@ -15,7 +22,7 @@ def test_news_encoding(dataset):
     BATCH_SIZE = 16
     TITLE_LENGTH = 20
 
-    model = TANR(dataset, WORD_EMBEDDING_DIM)
+    model = init_model(dataset, WORD_EMBEDDING_DIM)
 
     news_article = {
         "title": torch.randint(0, dataset.num_words, (BATCH_SIZE, TITLE_LENGTH)),
@@ -32,7 +39,7 @@ def test_user_encoding(dataset):
     BATCH_SIZE = 16
     N_CLICKED_NEWS = 50
 
-    model = TANR(dataset, WORD_EMBEDDING_DIM)
+    model = init_model(dataset, WORD_EMBEDDING_DIM)
 
     clicked_news_vector = torch.rand((BATCH_SIZE, N_CLICKED_NEWS, WORD_EMBEDDING_DIM))
 
@@ -46,7 +53,7 @@ def test_predicting(dataset):
     BATCH_SIZE = 16
     N_CANDIDATE_NEWS = 5
 
-    model = TANR(dataset, WORD_EMBEDDING_DIM)
+    model = init_model(dataset, WORD_EMBEDDING_DIM)
 
     news_vector = torch.rand((BATCH_SIZE, N_CANDIDATE_NEWS, WORD_EMBEDDING_DIM))
     user_vector = torch.rand((BATCH_SIZE, WORD_EMBEDDING_DIM))
@@ -63,7 +70,7 @@ def test_forward_pass(dataset):
     N_CANDIDATE_NEWS = 5
     N_CLICKED_NEWS = 50
 
-    model = TANR(dataset, WORD_EMBEDDING_DIM)
+    model = init_model(dataset, WORD_EMBEDDING_DIM)
 
     candidate_news = {
         "title": torch.randint(

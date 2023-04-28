@@ -23,11 +23,11 @@ class NewsEncoder(nn.Module):
         super(NewsEncoder, self).__init__()
         self.dropout_probability = dropout_probability
 
-        bert_config = AutoConfig.from_pretrained(pretrained_model_name)
+        self.bert_config = AutoConfig.from_pretrained(pretrained_model_name)
         if num_hidden_layers is not None:
-            bert_config.num_hidden_layers = num_hidden_layers
-        self.embedding_dim = bert_config.hidden_size
-        self.bert_model = AutoModel.from_config(bert_config)
+            self.bert_config.num_hidden_layers = num_hidden_layers
+        self.embedding_dim = self.bert_config.hidden_size
+        self.bert_model = AutoModel.from_config(self.bert_config)
 
         assert pooling_method in ["attention", "average", "pooler"]
         self.pooling_method = pooling_method
@@ -35,7 +35,7 @@ class NewsEncoder(nn.Module):
         # Only finetune last layers
         if finetune_n_last_layers >= 0:
             freeze_layers = list(
-                range(bert_config.num_hidden_layers - finetune_n_last_layers)
+                range(self.bert_config.num_hidden_layers - finetune_n_last_layers)
             )
             for name, param in self.bert_model.named_parameters():
                 if name.startswith("embedding"):
@@ -48,7 +48,7 @@ class NewsEncoder(nn.Module):
 
         if pooling_method == "attention":
             self.additive_attention = AdditiveAttention(
-                query_vector_dim, bert_config.hidden_size
+                query_vector_dim, self.bert_config.hidden_size
             )
 
     @property

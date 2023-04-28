@@ -7,7 +7,14 @@ src_path = os.path.abspath(os.path.join("./src"))
 if src_path not in sys.path:
     sys.path.append(src_path)
 
+from src.models.modules.bert.news_encoder import NewsEncoder
 from src.models.MINER import MINER
+
+
+def init_model(dataset, n_interest_vectors):
+    news_encoder = NewsEncoder(dataset)
+    model = MINER(news_encoder, dataset, n_interest_vectors)
+    return model
 
 
 def test_news_encoding(dataset):
@@ -15,12 +22,12 @@ def test_news_encoding(dataset):
     TITLE_LENGTH = 20
     N_INTEREST_VECTORS = 32
 
-    model = MINER(dataset, "bert-base-uncased", N_INTEREST_VECTORS)
+    model = init_model(dataset, N_INTEREST_VECTORS)
 
     news_article = {
         "title": {
             "input_ids": torch.randint(
-                0, model.bert_config.vocab_size, (BATCH_SIZE, TITLE_LENGTH)
+                0, model.news_encoder.bert_config.vocab_size, (BATCH_SIZE, TITLE_LENGTH)
             ),
             "attention_mask": torch.randint(0, 1, (BATCH_SIZE, TITLE_LENGTH)),
             "token_type_ids": torch.zeros(
@@ -31,7 +38,7 @@ def test_news_encoding(dataset):
 
     news_vector = model.get_news_vector(news_article)
     assert isinstance(news_vector, torch.Tensor)
-    assert news_vector.shape == (BATCH_SIZE, model.bert_config.hidden_size)
+    assert news_vector.shape == (BATCH_SIZE, model.news_encoder.bert_config.hidden_size)
 
 
 def test_user_encoding(dataset):
@@ -39,15 +46,15 @@ def test_user_encoding(dataset):
     N_CLICKED_NEWS = 50
     N_INTEREST_VECTORS = 32
 
-    model = MINER(dataset, "bert-base-uncased", N_INTEREST_VECTORS)
+    model = init_model(dataset, N_INTEREST_VECTORS)
 
     clicked_news_vector = torch.rand(
-        (BATCH_SIZE, N_CLICKED_NEWS, model.bert_config.hidden_size)
+        (BATCH_SIZE, N_CLICKED_NEWS, model.news_encoder.bert_config.hidden_size)
     )
 
     user_vectors = model.get_user_vector(clicked_news_vector)
     assert isinstance(user_vectors, torch.Tensor)
-    assert user_vectors.shape == (BATCH_SIZE, N_INTEREST_VECTORS, model.bert_config.hidden_size)
+    assert user_vectors.shape == (BATCH_SIZE, N_INTEREST_VECTORS, model.news_encoder.bert_config.hidden_size)
 
 
 def test_predicting(dataset):
@@ -55,10 +62,10 @@ def test_predicting(dataset):
     N_CANDIDATE_NEWS = 5
     N_INTEREST_VECTORS = 32
 
-    model = MINER(dataset, "bert-base-uncased", N_INTEREST_VECTORS)
+    model = init_model(dataset, N_INTEREST_VECTORS)
 
-    news_vector = torch.rand((BATCH_SIZE, N_CANDIDATE_NEWS, model.bert_config.hidden_size))
-    user_vectors = torch.rand((BATCH_SIZE, N_INTEREST_VECTORS, model.bert_config.hidden_size))
+    news_vector = torch.rand((BATCH_SIZE, N_CANDIDATE_NEWS, model.news_encoder.bert_config.hidden_size))
+    user_vectors = torch.rand((BATCH_SIZE, N_INTEREST_VECTORS, model.news_encoder.bert_config.hidden_size))
 
     prediction = model.get_prediction(news_vector, user_vectors)
     assert isinstance(prediction, torch.Tensor)
@@ -72,14 +79,14 @@ def test_forward_pass(dataset):
     N_CLICKED_NEWS = 50
     N_INTEREST_VECTORS = 32
 
-    model = MINER(dataset, "bert-base-uncased", N_INTEREST_VECTORS)
+    model = init_model(dataset, N_INTEREST_VECTORS)
 
 
     candidate_news = {
         "title": {
             "input_ids": torch.randint(
                 0,
-                model.bert_config.vocab_size,
+                model.news_encoder.bert_config.vocab_size,
                 (BATCH_SIZE, N_CANDIDATE_NEWS, TITLE_LENGTH),
             ),
             "attention_mask": torch.randint(
@@ -94,7 +101,7 @@ def test_forward_pass(dataset):
         "title": {
             "input_ids": torch.randint(
                 0,
-                model.bert_config.vocab_size,
+                model.news_encoder.bert_config.vocab_size,
                 (BATCH_SIZE, N_CLICKED_NEWS, TITLE_LENGTH),
             ),
             "attention_mask": torch.randint(

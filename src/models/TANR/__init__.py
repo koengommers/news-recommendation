@@ -99,18 +99,9 @@ class TANR(torch.nn.Module):
 
         return loss
 
-    def get_news_vector(self, news: dict[str, torch.Tensor]) -> torch.Tensor:
-        """
-        Args:
-            news:
-                {
-                    "title": batch_size * num_words_title
-                },
-        Returns:
-            (shape) batch_size, word_embedding_dim
-        """
-        # batch_size, word_embedding_dim
-        return self.news_encoder(news["title"].to(self.device))
+    def get_news_vector(self, news) -> torch.Tensor:
+        # batch_size, embedding_dim
+        return self.news_encoder(news)
 
     def get_user_vector(
         self, clicked_news_vector: torch.Tensor, mask: Optional[torch.Tensor] = None
