@@ -5,15 +5,17 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from models.modules.attention.additive import AdditiveAttention
+from utils.context import context
 from utils.data import load_pretrained_embeddings
 
 
 class NewsEncoder(nn.Module):
     def __init__(
         self,
-        dataset,
+        num_words: int = context.read("num_words", default=0),
         word_embedding_dim: int = 300,
         use_pretrained_embeddings: bool = False,
+        token2int: dict[str, int] = context.read("token2int", default={}),
         freeze_pretrained_embeddings: bool = False,
         dropout_probability: float = 0.2,
         window_size: int = 3,
@@ -25,7 +27,7 @@ class NewsEncoder(nn.Module):
         self.embedding_dim = num_filters
 
         if use_pretrained_embeddings:
-            pretrained_embeddings = load_pretrained_embeddings(dataset.tokenizer.t2i)
+            pretrained_embeddings = load_pretrained_embeddings(token2int)
             self.word_embedding = nn.Embedding.from_pretrained(
                 pretrained_embeddings,
                 freeze=freeze_pretrained_embeddings,
@@ -33,7 +35,7 @@ class NewsEncoder(nn.Module):
             )
         else:
             self.word_embedding = nn.Embedding(
-                dataset.num_words, word_embedding_dim, padding_idx=0
+                num_words, word_embedding_dim, padding_idx=0
             )
 
         assert window_size >= 1 and window_size % 2 == 1

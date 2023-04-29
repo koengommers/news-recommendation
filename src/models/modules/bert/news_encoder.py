@@ -12,7 +12,6 @@ from models.modules.attention.additive import AdditiveAttention
 class NewsEncoder(nn.Module):
     def __init__(
         self,
-        dataset,
         pretrained_model_name: str = "bert-base-uncased",
         pooling_method: str = "attention",
         dropout_probability: float = 0.2,

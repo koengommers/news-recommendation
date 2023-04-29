@@ -9,6 +9,7 @@ from tqdm import tqdm
 from datasets.recommender_training import RecommenderTrainingDataset
 from evaluation.recommender import evaluate
 from utils.collate import collate_fn
+from utils.context import context
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -43,12 +44,15 @@ def main(cfg: DictConfig) -> None:
         pin_memory=True,
         num_workers=cfg.num_workers,
     )
+    context.add("num_categories", dataset.num_categories)
+    context.add("num_words", dataset.num_words)
+    context.add("token2int", tokenizer.t2i)
 
     # Init news encoder
-    news_encoder = hydra.utils.instantiate(cfg.news_encoder, dataset)
+    news_encoder = hydra.utils.instantiate(cfg.news_encoder)
 
     # Init model
-    model = hydra.utils.instantiate(cfg.model, news_encoder, dataset).to(device)
+    model = hydra.utils.instantiate(cfg.model, news_encoder).to(device)
 
     # Init optimizer
     optimizer = hydra.utils.instantiate(cfg.optimizer, params=model.parameters())

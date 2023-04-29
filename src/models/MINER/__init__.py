@@ -45,7 +45,6 @@ class MINER(nn.Module):
     def __init__(
         self,
         news_encoder,
-        dataset,
         n_interest_vectors: int = 32,
         aggregate_method: str = "weighted",
         disagreement_loss_weight: float = 0.8,

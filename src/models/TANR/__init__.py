@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 
 from models.TANR.user_encoder import UserEncoder
+from utils.context import context
 
 
 class TANR(torch.nn.Module):
@@ -15,7 +16,7 @@ class TANR(torch.nn.Module):
     def __init__(
         self,
         news_encoder,
-        dataset,
+        num_categories: int = context.read("num_categories", default=0),
         topic_classification_loss_weight: float = 0.2,
     ):
         super(TANR, self).__init__()
@@ -23,7 +24,7 @@ class TANR(torch.nn.Module):
 
         self.news_encoder = news_encoder
         self.user_encoder = UserEncoder()
-        self.num_categories = dataset.num_categories
+        self.num_categories = num_categories
         self.topic_predictor = nn.Linear(
             news_encoder.embedding_dim, self.num_categories
         )

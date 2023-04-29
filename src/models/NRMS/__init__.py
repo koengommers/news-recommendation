@@ -15,7 +15,6 @@ class NRMS(nn.Module):
     def __init__(
         self,
         news_encoder,
-        dataset,
         num_attention_heads: int = 15,
     ):
         super(NRMS, self).__init__()
