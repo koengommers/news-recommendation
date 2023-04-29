@@ -11,7 +11,6 @@ from tqdm import tqdm
 from datasets.behaviors import BehaviorsDataset, behaviors_collate_fn
 from datasets.news import NewsDataset
 from evaluation.metrics import mrr_score, ndcg_score
-from models.BERT_NRMS import BERT_NRMS
 from models.MINER import MINER
 from models.NRMS import NRMS
 from models.TANR import TANR
@@ -40,7 +39,7 @@ def calculate_metrics(result):
 
 
 def evaluate(
-    model: Union[NRMS, TANR, BERT_NRMS, MINER],
+    model: Union[NRMS, TANR, MINER],
     split: str,
     tokenizer: Union[NltkTokenizer, BertTokenizer],
     categorical_encoders: dict[str, CategoricalEncoder],
