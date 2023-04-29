@@ -26,12 +26,13 @@ def test_bert_tokenizer_config():
                 "+news_encoder.pretrained_model_name=bert-base-uncased",
             ],
         )
+        print(cfg)
         assert cfg.tokenizer
         assert cfg.tokenizer.pretrained_model_name
         hydra.utils.instantiate(cfg.tokenizer)
 
 
-def test_nrms_model_config(dataset):
+def test_nrms_model_config():
     with hydra.initialize(version_base=None, config_path="../conf"):
         cfg = hydra.compose(
             config_name="train_recommender",
@@ -39,11 +40,11 @@ def test_nrms_model_config(dataset):
         )
         assert cfg.news_encoder
         assert cfg.model
-        news_encoder = hydra.utils.instantiate(cfg.news_encoder, dataset)
-        hydra.utils.instantiate(cfg.model, news_encoder, dataset)
+        news_encoder = hydra.utils.instantiate(cfg.news_encoder, num_words=1000)
+        hydra.utils.instantiate(cfg.model, news_encoder)
 
 
-def test_tanr_model_config(dataset):
+def test_tanr_model_config():
     with hydra.initialize(version_base=None, config_path="../conf"):
         cfg = hydra.compose(
             config_name="train_recommender",
@@ -51,11 +52,11 @@ def test_tanr_model_config(dataset):
         )
         assert cfg.news_encoder
         assert cfg.model
-        news_encoder = hydra.utils.instantiate(cfg.news_encoder, dataset)
-        hydra.utils.instantiate(cfg.model, news_encoder, dataset)
+        news_encoder = hydra.utils.instantiate(cfg.news_encoder, num_words=1000)
+        hydra.utils.instantiate(cfg.model, news_encoder, num_categories=15)
 
 
-def test_bert_nrms_model_config(dataset):
+def test_bert_nrms_model_config():
     with hydra.initialize(version_base=None, config_path="../conf"):
         cfg = hydra.compose(
             config_name="train_recommender",
@@ -65,11 +66,11 @@ def test_bert_nrms_model_config(dataset):
         )
         assert cfg.news_encoder
         assert cfg.model
-        news_encoder = hydra.utils.instantiate(cfg.news_encoder, dataset)
-        hydra.utils.instantiate(cfg.model, news_encoder, dataset)
+        news_encoder = hydra.utils.instantiate(cfg.news_encoder)
+        hydra.utils.instantiate(cfg.model, news_encoder)
 
 
-def test_miner_model_config(dataset):
+def test_miner_model_config():
     with hydra.initialize(version_base=None, config_path="../conf"):
         cfg = hydra.compose(
             config_name="train_recommender",
@@ -79,5 +80,5 @@ def test_miner_model_config(dataset):
         )
         assert cfg.news_encoder
         assert cfg.model
-        news_encoder = hydra.utils.instantiate(cfg.news_encoder, dataset)
-        hydra.utils.instantiate(cfg.model, news_encoder, dataset)
+        news_encoder = hydra.utils.instantiate(cfg.news_encoder)
+        hydra.utils.instantiate(cfg.model, news_encoder)

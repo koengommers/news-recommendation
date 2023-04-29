@@ -11,17 +11,17 @@ from src.models.modules.bert.news_encoder import NewsEncoder
 from src.models.NRMS import NRMS
 
 
-def init_model(dataset):
-    news_encoder = NewsEncoder(dataset)
-    model = NRMS(news_encoder, dataset, num_attention_heads=16)
+def init_model():
+    news_encoder = NewsEncoder()
+    model = NRMS(news_encoder, num_attention_heads=16)
     return model
 
 
-def test_news_encoding(dataset):
+def test_news_encoding():
     BATCH_SIZE = 4
     TITLE_LENGTH = 20
 
-    model = init_model(dataset)
+    model = init_model()
 
     news_article = {
         "title": {
@@ -40,11 +40,11 @@ def test_news_encoding(dataset):
     assert news_vector.shape == (BATCH_SIZE, model.news_encoder.bert_config.hidden_size)
 
 
-def test_user_encoding(dataset):
+def test_user_encoding():
     BATCH_SIZE = 4
     N_CLICKED_NEWS = 50
 
-    model = init_model(dataset)
+    model = init_model()
 
     clicked_news_vector = torch.rand(
         (BATCH_SIZE, N_CLICKED_NEWS, model.news_encoder.bert_config.hidden_size)
@@ -55,11 +55,11 @@ def test_user_encoding(dataset):
     assert user_vector.shape == (BATCH_SIZE, model.news_encoder.bert_config.hidden_size)
 
 
-def test_predicting(dataset):
+def test_predicting():
     BATCH_SIZE = 4
     N_CANDIDATE_NEWS = 5
 
-    model = init_model(dataset)
+    model = init_model()
 
     news_vector = torch.rand(
         (BATCH_SIZE, N_CANDIDATE_NEWS, model.news_encoder.bert_config.hidden_size)
@@ -71,13 +71,13 @@ def test_predicting(dataset):
     assert prediction.shape == (BATCH_SIZE, N_CANDIDATE_NEWS)
 
 
-def test_forward_pass(dataset):
+def test_forward_pass():
     BATCH_SIZE = 4
     TITLE_LENGTH = 20
     N_CANDIDATE_NEWS = 5
     N_CLICKED_NEWS = 50
 
-    model = init_model(dataset)
+    model = init_model()
 
     candidate_news = {
         "title": {

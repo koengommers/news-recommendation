@@ -11,18 +11,18 @@ from src.models.modules.bert.news_encoder import NewsEncoder
 from src.models.MINER import MINER
 
 
-def init_model(dataset, n_interest_vectors):
-    news_encoder = NewsEncoder(dataset)
-    model = MINER(news_encoder, dataset, n_interest_vectors)
+def init_model(n_interest_vectors):
+    news_encoder = NewsEncoder()
+    model = MINER(news_encoder, n_interest_vectors)
     return model
 
 
-def test_news_encoding(dataset):
+def test_news_encoding():
     BATCH_SIZE = 4
     TITLE_LENGTH = 20
     N_INTEREST_VECTORS = 32
 
-    model = init_model(dataset, N_INTEREST_VECTORS)
+    model = init_model(N_INTEREST_VECTORS)
 
     news_article = {
         "title": {
@@ -41,12 +41,12 @@ def test_news_encoding(dataset):
     assert news_vector.shape == (BATCH_SIZE, model.news_encoder.bert_config.hidden_size)
 
 
-def test_user_encoding(dataset):
+def test_user_encoding():
     BATCH_SIZE = 4
     N_CLICKED_NEWS = 50
     N_INTEREST_VECTORS = 32
 
-    model = init_model(dataset, N_INTEREST_VECTORS)
+    model = init_model(N_INTEREST_VECTORS)
 
     clicked_news_vector = torch.rand(
         (BATCH_SIZE, N_CLICKED_NEWS, model.news_encoder.bert_config.hidden_size)
@@ -57,12 +57,12 @@ def test_user_encoding(dataset):
     assert user_vectors.shape == (BATCH_SIZE, N_INTEREST_VECTORS, model.news_encoder.bert_config.hidden_size)
 
 
-def test_predicting(dataset):
+def test_predicting():
     BATCH_SIZE = 4
     N_CANDIDATE_NEWS = 5
     N_INTEREST_VECTORS = 32
 
-    model = init_model(dataset, N_INTEREST_VECTORS)
+    model = init_model(N_INTEREST_VECTORS)
 
     news_vector = torch.rand((BATCH_SIZE, N_CANDIDATE_NEWS, model.news_encoder.bert_config.hidden_size))
     user_vectors = torch.rand((BATCH_SIZE, N_INTEREST_VECTORS, model.news_encoder.bert_config.hidden_size))
@@ -72,14 +72,14 @@ def test_predicting(dataset):
     assert prediction.shape == (BATCH_SIZE, N_CANDIDATE_NEWS)
 
 
-def test_forward_pass(dataset):
+def test_forward_pass():
     BATCH_SIZE = 4
     TITLE_LENGTH = 20
     N_CANDIDATE_NEWS = 5
     N_CLICKED_NEWS = 50
     N_INTEREST_VECTORS = 32
 
-    model = init_model(dataset, N_INTEREST_VECTORS)
+    model = init_model(N_INTEREST_VECTORS)
 
 
     candidate_news = {
