@@ -36,6 +36,10 @@ def main(cfg: DictConfig) -> None:
         cfg.history_length,
         cfg.features,
     )
+    context.add("num_categories", dataset.num_categories)
+    context.add("num_words", dataset.num_words)
+    context.add("token2int", tokenizer.t2i)
+
     dataloader = DataLoader(
         dataset,
         batch_size=cfg.batch_size,
