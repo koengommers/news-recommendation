@@ -1,0 +1,11 @@
+# @package _global_
+defaults:
+  - /tokenizer: bert
+
+model:
+  news_encoder:
+    _target_: models.news_encoders.sentence_transformer.SentenceTransformerNewsEncoder
+    pretrained_model_name: all-MiniLM-L12-v2
+
+tokenizer:
+  is_sentence_transformer: true

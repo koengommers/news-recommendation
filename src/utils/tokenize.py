@@ -1,4 +1,7 @@
+from typing import Any
+
 from nltk.tokenize import word_tokenize
+from sentence_transformers import SentenceTransformer
 from transformers import AutoConfig, AutoTokenizer
 
 
@@ -32,8 +35,11 @@ class NltkTokenizer:
 
 
 class BertTokenizer:
-    def __init__(self, pretrained_model_name: str):
-        self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name)
+    def __init__(self, pretrained_model_name: str, is_sentence_transformer=False):
+        if is_sentence_transformer:
+            self.tokenizer: Any = SentenceTransformer(pretrained_model_name).tokenizer
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained(pretrained_model_name)
         self.pretrained_model_name = pretrained_model_name
 
     def eval(self):
@@ -41,8 +47,7 @@ class BertTokenizer:
 
     @property
     def vocab_size(self):
-        config = AutoConfig.from_pretrained(self.pretrained_model_name)
-        return config.vocab_size
+        return 0
 
     def __call__(self, text: str, length: int) -> dict[str, list[int]]:
         return dict(
