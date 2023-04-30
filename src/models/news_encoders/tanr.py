@@ -9,7 +9,7 @@ from utils.context import context
 from utils.data import load_pretrained_embeddings
 
 
-class NewsEncoder(nn.Module):
+class TANRNewsEncoder(nn.Module):
     def __init__(
         self,
         num_words: int = context.read("num_words", default=0),
@@ -22,7 +22,7 @@ class NewsEncoder(nn.Module):
         num_filters: int = 300,
         query_vector_dim: int = 200,
     ):
-        super(NewsEncoder, self).__init__()
+        super(TANRNewsEncoder, self).__init__()
         self.dropout_probability = dropout_probability
         self.embedding_dim = num_filters
 

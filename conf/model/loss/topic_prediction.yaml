@@ -1,0 +1,3 @@
+topic_prediction:
+  _target_: models.loss_modules.topic_prediction.TopicPredictionLoss
+  weight: 0.2

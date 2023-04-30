@@ -1,0 +1,3 @@
+prediction:
+  _target_: models.loss_modules.prediction.PredictionLoss
+  weight: 1

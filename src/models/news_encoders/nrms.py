@@ -10,7 +10,7 @@ from utils.context import context
 from utils.data import load_pretrained_embeddings
 
 
-class NewsEncoder(nn.Module):
+class NRMSNewsEncoder(nn.Module):
     def __init__(
         self,
         num_words: int = context.read("num_words", default=0),
@@ -22,9 +22,9 @@ class NewsEncoder(nn.Module):
         num_attention_heads: int = 15,
         query_vector_dim: int = 200,
     ):
-        super(NewsEncoder, self).__init__()
+        super(NRMSNewsEncoder, self).__init__()
         self.dropout_probability = dropout_probability
-        self.embedding_dim = 300
+        self.embedding_dim = word_embedding_dim
 
         if use_pretrained_embeddings:
             pretrained_embeddings = load_pretrained_embeddings(token2int)

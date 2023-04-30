@@ -4,16 +4,17 @@ import torch
 import torch.nn as nn
 
 from models.modules.attention.additive import AdditiveAttention
+from utils.context import context
 
 
-class UserEncoder(nn.Module):
+class MultiInterestUserEncoder(nn.Module):
     def __init__(
         self,
+        news_embedding_dim: int = context.read("news_embedding_dim", default=300),
         n_interest_vectors: int = 32,
         query_vector_dim: int = 200,
-        news_embedding_dim: int = 768,
     ) -> None:
-        super(UserEncoder, self).__init__()
+        super(MultiInterestUserEncoder, self).__init__()
         self.additive_attentions = nn.ModuleList(
             [
                 AdditiveAttention(query_vector_dim, news_embedding_dim)

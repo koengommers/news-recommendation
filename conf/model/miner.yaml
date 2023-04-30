@@ -1,18 +1,16 @@
 # @package _global_
 defaults:
   - /tokenizer: bert
+  - /model/news_encoder: bert
+  - /model/user_encoder: multi_interest
+  - /model/click_predictor: multi_interest
+  - /model/loss:
+    - prediction
+    - interest_disagreement
 
 model:
-  _target_: models.MINER.MINER
-  n_interest_vectors: 32
-  aggregate_method: weighted
-  disagreement_loss_weight: 0.8
-
-news_encoder:
-  _target_: models.modules.bert.news_encoder.NewsEncoder
-  pretrained_model_name: bert-base-uncased
-  pooling_method: pooler
-  finetune_n_last_layers: -1
+  news_encoder:
+    finetune_n_last_layers: -1
 
 features:
   - title

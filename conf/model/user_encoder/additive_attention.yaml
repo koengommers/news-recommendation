@@ -1,0 +1,2 @@
+_target_: models.user_encoders.additive_attention.AdditiveAttentionUserEncoder
+query_vector_dim: 200

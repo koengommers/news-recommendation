@@ -9,7 +9,7 @@ from transformers import AutoConfig, AutoModel
 from models.modules.attention.additive import AdditiveAttention
 
 
-class NewsEncoder(nn.Module):
+class BERTNewsEncoder(nn.Module):
     def __init__(
         self,
         pretrained_model_name: str = "bert-base-uncased",
@@ -19,7 +19,7 @@ class NewsEncoder(nn.Module):
         num_hidden_layers: Optional[int] = None,
         finetune_n_last_layers: int = 2,
     ):
-        super(NewsEncoder, self).__init__()
+        super(BERTNewsEncoder, self).__init__()
         self.dropout_probability = dropout_probability
 
         self.bert_config = AutoConfig.from_pretrained(pretrained_model_name)

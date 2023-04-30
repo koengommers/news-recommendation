@@ -61,6 +61,8 @@ class RecommenderTrainingDataset(Dataset):
 
     @property
     def num_categories(self) -> int:
+        if "category" not in self.categorical_encoders:
+            return 0
         return self.categorical_encoders["category"].n_categories + 1
 
     def prepare_logs(self) -> pd.DataFrame:
