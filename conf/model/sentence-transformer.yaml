@@ -1,0 +1,9 @@
+# @package _global_
+defaults:
+  - /model/news_encoder: sentence_transformer
+  - /model/user_encoder: mean
+  - /model/click_predictor: inner_product
+  - /model/loss: prediction
+
+features:
+  - title

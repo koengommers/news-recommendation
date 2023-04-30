@@ -18,6 +18,7 @@ class NewsRecommender(nn.Module):
         return self.news_encoder(news)
 
     def encode_user(self, clicked_news, mask=None):
+        clicked_news = clicked_news.to(self.device)
         if mask is not None:
             return self.user_encoder(clicked_news, mask.to(self.device))
         return self.user_encoder(clicked_news)
