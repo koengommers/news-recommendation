@@ -1,12 +1,18 @@
 # @package _global_
 defaults:
-  - /tokenizer: bert
+  - /model/news_encoder: bert
+  - /model/user_encoder: nrms
+  - /model/click_predictor: inner_product
+  - /model/loss: prediction
 
 model:
-  _target_: models.BERT_NRMS.BERT_NRMS
-  pretrained_model_name: bert-base-uncased
-  bert_pooling_method: attention
-  num_hidden_layers: 8
+  news_encoder:
+    pooling_method: attention
+    num_hidden_layers: 8
+    finetune_n_last_layers: 2
+
+  user_encoder:
+    num_attention_heads: 16
 
 features:
   - title

@@ -1,0 +1,3 @@
+interest_disagreement:
+  _target_: models.loss_modules.interest_disagreement.InterestDisagreementLoss
+  weight: 0.8

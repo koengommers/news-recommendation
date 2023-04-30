@@ -4,11 +4,17 @@ import torch
 import torch.nn as nn
 
 from models.modules.attention.additive import AdditiveAttention
+from utils.context import context
 
 
-class UserEncoder(nn.Module):
-    def __init__(self, query_vector_dim: int = 200, num_filters: int = 300):
-        super(UserEncoder, self).__init__()
+class AdditiveAttentionUserEncoder(nn.Module):
+    @context.fill(num_filters="news_embedding_dim")
+    def __init__(
+        self,
+        query_vector_dim: int = 200,
+        num_filters: int = 300,
+    ):
+        super(AdditiveAttentionUserEncoder, self).__init__()
         self.additive_attention = AdditiveAttention(query_vector_dim, num_filters)
 
     def forward(

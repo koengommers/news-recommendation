@@ -1,12 +1,9 @@
 # @package _global_
 defaults:
-  - /tokenizer: nltk
-
-model:
-  _target_: models.NRMS.NRMS
-  word_embedding_dim: 300
-  use_pretrained_embeddings: true
-  freeze_pretrained_embeddings: false
+  - /model/news_encoder: nrms
+  - /model/user_encoder: nrms
+  - /model/click_predictor: inner_product
+  - /model/loss: prediction
 
 features:
   - title

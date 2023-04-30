@@ -8,7 +8,10 @@ from tqdm import tqdm
 
 from datasets.recommender_training import RecommenderTrainingDataset
 from evaluation.recommender import evaluate
+from models.news_recommender import NewsRecommender
 from utils.collate import collate_fn
+from utils.context import context
+from utils.tokenize import NltkTokenizer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -35,6 +38,11 @@ def main(cfg: DictConfig) -> None:
         cfg.history_length,
         cfg.features,
     )
+    context.add("num_categories", dataset.num_categories)
+    context.add("num_words", dataset.num_words)
+    if isinstance(tokenizer, NltkTokenizer):
+        context.add("token2int", tokenizer.t2i)
+
     dataloader = DataLoader(
         dataset,
         batch_size=cfg.batch_size,
@@ -44,8 +52,25 @@ def main(cfg: DictConfig) -> None:
         num_workers=cfg.num_workers,
     )
 
-    # Init model, dataset needs to be passed for number of words and categories
-    model = hydra.utils.instantiate(cfg.model, dataset).to(device)
+    # Init news encoder
+    news_encoder = hydra.utils.instantiate(cfg.model.news_encoder)
+    context.add("news_embedding_dim", news_encoder.embedding_dim)
+
+    # Init user encoder
+    user_encoder = hydra.utils.instantiate(cfg.model.user_encoder)
+
+    # Init click predictor
+    click_predictor = hydra.utils.instantiate(cfg.model.click_predictor)
+
+    # Init loss modules
+    loss_modules = [
+        hydra.utils.instantiate(loss_cfg) for loss_cfg in cfg.model.loss.values()
+    ]
+
+    # Init model
+    model = NewsRecommender(
+        news_encoder, user_encoder, click_predictor, loss_modules
+    ).to(device)
 
     # Init optimizer
     optimizer = hydra.utils.instantiate(cfg.optimizer, params=model.parameters())
