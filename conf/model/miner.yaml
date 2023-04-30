@@ -1,6 +1,5 @@
 # @package _global_
 defaults:
-  - /tokenizer: bert
   - /model/news_encoder: bert
   - /model/user_encoder: multi_interest
   - /model/click_predictor: multi_interest

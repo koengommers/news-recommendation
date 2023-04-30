@@ -1,6 +1,5 @@
 # @package _global_
 defaults:
-  - /tokenizer: nltk
   - /model/news_encoder: nrms
   - /model/user_encoder: nrms
   - /model/click_predictor: inner_product

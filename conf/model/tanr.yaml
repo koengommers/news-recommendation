@@ -1,6 +1,5 @@
 # @package _global_
 defaults:
-  - /tokenizer: nltk
   - /model/news_encoder: tanr
   - /model/user_encoder: additive_attention
   - /model/click_predictor: inner_product

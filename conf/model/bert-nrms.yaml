@@ -1,6 +1,5 @@
 # @package _global_
 defaults:
-  - /tokenizer: bert
   - /model/news_encoder: bert
   - /model/user_encoder: nrms
   - /model/click_predictor: inner_product
