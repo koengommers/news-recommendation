@@ -69,7 +69,7 @@ def evaluate(
             desc="Encoding news for evaluation",
             disable=cfg.tqdm_disable,
         ):
-            output = model.get_news_vector(batched_news_features)
+            output = model.encode_news(batched_news_features)
             output = output.to(torch.device("cpu"))
             news_vectors.update(dict(zip(news_ids, output)))
 
@@ -90,15 +90,15 @@ def evaluate(
             behaviors_dataloader, desc="Evaluating logs", disable=cfg.tqdm_disable
         ):
             if cfg.use_history_mask:
-                user_vectors = model.get_user_vector(clicked_news_vectors, mask)
+                user_vectors = model.encode_user(clicked_news_vectors, mask)
             else:
-                user_vectors = model.get_user_vector(clicked_news_vectors)
+                user_vectors = model.encode_user(clicked_news_vectors)
 
             for i in range(len(impression_ids)):
                 impressions = torch.stack(
                     [news_vectors[id] for id in impression_ids[i]]
                 ).unsqueeze(0)
-                probs = model.get_prediction(
+                probs = model.rank(
                     impressions.to(device), user_vectors[i].unsqueeze(0)
                 ).squeeze(0)
                 probs_list = probs.tolist()
