@@ -8,10 +8,11 @@ from utils.context import context
 
 
 class AdditiveAttentionUserEncoder(nn.Module):
+    @context.fill(num_filters="news_embedding_dim")
     def __init__(
         self,
         query_vector_dim: int = 200,
-        num_filters: int = context.read("news_embedding_dim", default=300),
+        num_filters: int = 300,
     ):
         super(AdditiveAttentionUserEncoder, self).__init__()
         self.additive_attention = AdditiveAttention(query_vector_dim, num_filters)

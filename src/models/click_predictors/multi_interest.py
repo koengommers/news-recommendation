@@ -36,13 +36,10 @@ class TargetAwareAttention(nn.Module):
 
 
 class MultiInterestClickPredictor(nn.Module):
-    """
-    MINER network.
-    """
-
+    @context.fill(news_embedding_dim="news_embedding_dim")
     def __init__(
         self,
-        news_embedding_dim: int = context.read("news_embedding_dim", default=300),
+        news_embedding_dim: int = 300,
         aggregate_method: str = "weighted",
     ):
         super(MultiInterestClickPredictor, self).__init__()

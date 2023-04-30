@@ -5,12 +5,10 @@ from utils.context import context
 
 
 class TopicPredictionLoss(nn.Module):
-    def __init__(
-        self,
-        weight=0.2,
-        news_embedding_dim=context.read("news_embedding_dim"),
-        num_categories=context.read("num_categories"),
-    ):
+    @context.fill(
+        news_embedding_dim="news_embedding_dim", num_categories="num_categories"
+    )
+    def __init__(self, weight=0.2, news_embedding_dim=300, num_categories=1):
         super(TopicPredictionLoss, self).__init__()
         self.weight = weight
         self.news_embedding_dim = news_embedding_dim

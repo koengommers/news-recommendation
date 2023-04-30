@@ -10,12 +10,13 @@ from utils.data import load_pretrained_embeddings
 
 
 class TANRNewsEncoder(nn.Module):
+    @context.fill(num_words="num_words", token2int="token2int")
     def __init__(
         self,
-        num_words: int = context.read("num_words", default=0),
+        num_words: int = 0,
         word_embedding_dim: int = 300,
         use_pretrained_embeddings: bool = False,
-        token2int: dict[str, int] = context.read("token2int", default={}),
+        token2int: dict[str, int] = {},
         freeze_pretrained_embeddings: bool = False,
         dropout_probability: float = 0.2,
         window_size: int = 3,

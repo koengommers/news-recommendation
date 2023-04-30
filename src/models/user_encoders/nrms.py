@@ -8,9 +8,10 @@ from utils.context import context
 
 
 class NRMSUserEncoder(torch.nn.Module):
+    @context.fill(news_embedding_dim="news_embedding_dim")
     def __init__(
         self,
-        news_embedding_dim: int = context.read("news_embedding_dim", default=300),
+        news_embedding_dim: int = 300,
         query_vector_dim: int = 200,
         num_attention_heads: int = 15,
     ):
