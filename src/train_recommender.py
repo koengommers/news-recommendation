@@ -75,7 +75,18 @@ def main(cfg: DictConfig) -> None:
     # Init optimizer
     optimizer = hydra.utils.instantiate(cfg.optimizer, params=model.parameters())
 
-    for epoch_num in tqdm(range(1, cfg.epochs + 1), disable=cfg.tqdm_disable):
+    # Optionally load from checkpoint
+    epochs = 0
+    if "checkpoint_file" in cfg:
+        print(f"Restoring from checkpoint {cfg.checkpoint_file}")
+        checkpoint = torch.load(cfg.checkpoint_file)
+        model.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        torch.set_rng_state(checkpoint["cpu_rng_state"])
+        torch.cuda.set_rng_state(checkpoint["gpu_rng_state"])
+        epochs = checkpoint["epochs"]
+
+    for epoch_num in tqdm(range(epochs + 1, cfg.epochs + 1), disable=cfg.tqdm_disable):
         total_train_loss = 0.0
 
         # Train
@@ -115,10 +126,13 @@ def main(cfg: DictConfig) -> None:
         # Save model
         torch.save(
             {
+                "epochs": epoch_num,
                 "model_state_dict": model.state_dict(),
-                "metrics": metrics,
+                "optimizer_state_dict": optimizer.state_dict(),
+                "cpu_rng_state": torch.get_rng_state(),
+                "gpu_rng_state": torch.cuda.get_rng_state(),
             },
-            f"checkpoint_{cfg.model.architecture}_{epoch_num}.pt",
+            f"checkpoint_{epoch_num}.pt",
         )
 
 
