@@ -156,17 +156,7 @@ def load_users(
     data_dir: str = DEFAULT_DATA_DIR,
 ) -> pd.DataFrame:
     behaviors = load_behaviors(variant, splits, data_dir=data_dir)
-    users = convert_behaviors_to_users(behaviors)
-    return users
-
-
-def _combine_history(histories: pd.Series) -> pd.Series:
-    return histories[histories.apply(len).idxmax()]
-
-
-def convert_behaviors_to_users(behaviors: pd.DataFrame) -> pd.DataFrame:
-    grouped = behaviors.groupby("user")
-    users = grouped.agg({"history": _combine_history})
+    users = behaviors.groupby("user").first()
     return users
 
 
