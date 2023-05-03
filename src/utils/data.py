@@ -6,13 +6,14 @@ from urllib.parse import urlparse
 import pandas as pd
 import requests
 import torch
+from hydra.utils import to_absolute_path
 from tqdm import tqdm
 
 SPLITS = {
     "small": ["train", "dev"],
     "large": ["train", "dev", "test"],
 }
-DEFAULT_DATA_DIR = "./data"
+DEFAULT_DATA_DIR = to_absolute_path("data")
 
 
 def get_mind_path(
