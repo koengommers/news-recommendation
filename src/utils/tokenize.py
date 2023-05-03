@@ -2,7 +2,7 @@ from typing import Any
 
 from nltk.tokenize import word_tokenize
 from sentence_transformers import SentenceTransformer
-from transformers import AutoConfig, AutoTokenizer
+from transformers import AutoTokenizer
 
 
 class NltkTokenizer:
