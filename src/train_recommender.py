@@ -1,6 +1,7 @@
 import random
 
 import hydra
+import pandas as pd
 import torch
 from omegaconf import DictConfig, OmegaConf
 from torch.utils.data import DataLoader
@@ -86,6 +87,9 @@ def main(cfg: DictConfig) -> None:
         torch.cuda.set_rng_state(checkpoint["gpu_rng_state"])
         epochs = checkpoint["epochs"]
 
+    dev_metrics_per_epoch = []
+    test_metrics_per_epoch = []
+
     for epoch_num in tqdm(range(epochs + 1, cfg.epochs + 1), disable=cfg.tqdm_disable):
         total_train_loss = 0.0
 
@@ -120,6 +124,7 @@ def main(cfg: DictConfig) -> None:
         dev_metrics, dev_probs = evaluate(
             model, "dev", tokenizer, dataset.categorical_encoders, cfg
         )
+        dev_metrics_per_epoch.append(dev_metrics)
         dev_probs.to_feather(f"probs_{epoch_num}_dev.feather")
 
         tqdm.write(
@@ -133,6 +138,7 @@ def main(cfg: DictConfig) -> None:
         test_metrics, test_probs = evaluate(
             model, "test", tokenizer, dataset.categorical_encoders, cfg
         )
+        test_metrics_per_epoch.append(test_metrics)
         test_probs.to_feather(f"probs_{epoch_num}_test.feather")
 
         tqdm.write(
@@ -153,6 +159,10 @@ def main(cfg: DictConfig) -> None:
             },
             f"checkpoint_{epoch_num}.pt",
         )
+
+    # Save metrics
+    pd.DataFrame(dev_metrics_per_epoch).to_csv("metrics_dev.csv")
+    pd.DataFrame(test_metrics_per_epoch).to_csv("metrics_test.csv")
 
 
 if __name__ == "__main__":
