@@ -100,7 +100,7 @@ def load_behaviors(
     if splits is None:
         splits = SPLITS[variant]
 
-    column_names = ["impression_id", "user", "time", "history", "impressions"]
+    column_names = ["log_id", "user", "time", "history", "impressions"]
     if columns is None:
         columns = column_names
     column_indices = [column_names.index(col) for col in columns]

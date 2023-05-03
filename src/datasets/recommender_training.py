@@ -95,7 +95,7 @@ class RecommenderTrainingDataset(Dataset):
         behaviors = behaviors.reset_index(drop=True).drop(
             columns=[
                 "time",
-                "impression_id",
+                "log_id",
                 "impressions",
                 "positive_sample",
                 "negative_samples",

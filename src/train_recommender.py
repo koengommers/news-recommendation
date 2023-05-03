@@ -116,11 +116,30 @@ def main(cfg: DictConfig) -> None:
             f"Epochs: {epoch_num} | Average train loss: {total_train_loss / len(dataloader)}"
         )
 
-        # Evaluate
-        metrics = evaluate(model, "dev", tokenizer, dataset.categorical_encoders, cfg)
+        # Evaluate on dev
+        dev_metrics, dev_probs = evaluate(
+            model, "dev", tokenizer, dataset.categorical_encoders, cfg
+        )
+        dev_probs.to_feather(f"probs_{epoch_num}_dev.feather")
 
         tqdm.write(
-            " | ".join(f"{metric}: {score:.5f}" for metric, score in metrics.items())
+            "(dev) "
+            + " | ".join(
+                f"{metric}: {dev_metrics[metric]:.5f}" for metric in dev_metrics
+            )
+        )
+
+        # Evaluate on test
+        test_metrics, test_probs = evaluate(
+            model, "test", tokenizer, dataset.categorical_encoders, cfg
+        )
+        test_probs.to_feather(f"probs_{epoch_num}_test.feather")
+
+        tqdm.write(
+            "(test) "
+            + " | ".join(
+                f"{metric}: {test_metrics[metric]:.5f}" for metric in test_metrics
+            )
         )
 
         # Save model

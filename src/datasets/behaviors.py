@@ -7,12 +7,13 @@ from utils.data import load_behaviors
 
 
 def behaviors_collate_fn(batch):
-    clicked_news_vectors = torch.stack([x[0] for x in batch])
-    mask = torch.Tensor([x[1] for x in batch])
-    impression_ids = [x[2] for x in batch]
-    clicked = [x[3] for x in batch]
+    log_ids = [x[0] for x in batch]
+    clicked_news_vectors = torch.stack([x[1] for x in batch])
+    mask = torch.Tensor([x[2] for x in batch])
+    impression_ids = [x[3] for x in batch]
+    clicked = [x[4] for x in batch]
 
-    return clicked_news_vectors, mask, impression_ids, clicked
+    return log_ids, clicked_news_vectors, mask, impression_ids, clicked
 
 
 class BehaviorsDataset(Dataset):
@@ -38,7 +39,9 @@ class BehaviorsDataset(Dataset):
         )
 
         self.behaviors = load_behaviors(
-            mind_variant, splits=[self.split], columns=["history", "impressions"]
+            mind_variant,
+            splits=[self.split],
+            columns=["log_id", "history", "impressions"],
         )
 
     def pad_history_ids(self, history_ids):
@@ -52,7 +55,7 @@ class BehaviorsDataset(Dataset):
 
     def __getitem__(
         self, idx: int
-    ) -> Tuple[torch.Tensor, list[int], list[str], list[int]]:
+    ) -> Tuple[str, torch.Tensor, list[int], list[str], list[int]]:
         row = self.behaviors.iloc[idx]
         padded_history, mask = self.pad_history_ids(row.history[-self.history_length :])
         clicked_news_vectors = torch.stack(
@@ -66,4 +69,4 @@ class BehaviorsDataset(Dataset):
         )
         clicked: list[int] = [int(y) for y in clicked_str]
 
-        return clicked_news_vectors, mask, impression_ids, clicked
+        return row.log_id, clicked_news_vectors, mask, impression_ids, clicked

@@ -1,7 +1,7 @@
 from multiprocessing import Pool
 from typing import Union
 
-import numpy as np
+import pandas as pd
 import torch
 from omegaconf import DictConfig
 from sklearn.metrics import roc_auc_score
@@ -29,10 +29,9 @@ scoring_functions = {
 
 
 def calculate_metrics(result):
-    return {
-        metric: scoring_fn(result[0], result[1])
-        for metric, scoring_fn in scoring_functions.items()
-    }
+    for metric, scoring_fn in scoring_functions.items():
+        result[metric] = scoring_fn(result["clicked"], result["probs"])
+    return result
 
 
 def evaluate(
@@ -41,7 +40,7 @@ def evaluate(
     tokenizer: Union[NltkTokenizer, BertTokenizer],
     categorical_encoders: dict[str, CategoricalEncoder],
     cfg: DictConfig,
-) -> dict[str, np.floating]:
+) -> tuple[dict[str, float], pd.DataFrame]:
     model.eval()
     tokenizer.eval()
 
@@ -86,7 +85,7 @@ def evaluate(
     # Make predictions
     results = []
     with torch.no_grad():
-        for clicked_news_vectors, mask, impression_ids, clicked in tqdm(
+        for log_ids, clicked_news_vectors, mask, impression_ids, clicked in tqdm(
             behaviors_dataloader, desc="Evaluating logs", disable=cfg.tqdm_disable
         ):
             if cfg.use_history_mask:
@@ -94,7 +93,7 @@ def evaluate(
             else:
                 user_vectors = model.encode_user(clicked_news_vectors)
 
-            for i in range(len(impression_ids)):
+            for i in range(len(log_ids)):
                 impressions = torch.stack(
                     [news_vectors[id] for id in impression_ids[i]]
                 ).unsqueeze(0)
@@ -102,13 +101,18 @@ def evaluate(
                     impressions.to(device), user_vectors[i].unsqueeze(0)
                 ).squeeze(0)
                 probs_list = probs.tolist()
-                results.append((clicked[i], probs_list))
+                results.append(
+                    {"log_id": log_ids[i], "clicked": clicked[i], "probs": probs_list}
+                )
 
     # Calculate metrics
     with Pool(processes=cfg.num_workers) as pool:
         scores = pool.map(calculate_metrics, results)
 
-    metrics = {
-        metric: np.mean([x[metric] for x in scores]) for metric in scoring_functions
-    }
-    return metrics
+    eval_data = pd.DataFrame(scores)
+    eval_data = eval_data.set_index("log_id")
+
+    metrics = {metric: eval_data[metric].mean() for metric in scoring_functions}
+    probs = eval_data["probs"].reset_index()
+
+    return metrics, probs
