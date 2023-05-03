@@ -2,7 +2,7 @@ hydra:
   job:
     chdir: true
 
-seed: 123
+seed: 704
 epochs: 5
 batch_size: 64
 negative_sampling_ratio: 4
