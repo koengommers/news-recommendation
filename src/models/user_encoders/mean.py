@@ -18,10 +18,4 @@ class MeanUserEncoder(nn.Module):
         Returns:
             (shape) batch_size, embedding_dim
         """
-        if mask is not None:
-            number_of_news = mask.sum(dim=-1, keepdim=True)
-            masked_news = clicked_news_vector * mask.unsqueeze(-1)
-            mean = torch.sum(masked_news, dim=1) / number_of_news
-            return mean.nan_to_num()
-
         return clicked_news_vector.mean(dim=1)
