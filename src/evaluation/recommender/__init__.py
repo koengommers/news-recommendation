@@ -11,6 +11,7 @@ from tqdm import tqdm
 from datasets.behaviors import BehaviorsDataset, behaviors_collate_fn
 from datasets.news import NewsDataset
 from evaluation.metrics import mrr_score, ndcg_score
+from models.news_recommender import NewsRecommender
 from utils.collate import collate_fn
 from utils.encode import CategoricalEncoder
 from utils.tokenize import BertTokenizer, NltkTokenizer
@@ -35,7 +36,7 @@ def calculate_metrics(result):
 
 
 def evaluate(
-    model,
+    model: NewsRecommender,
     split: str,
     tokenizer: Union[NltkTokenizer, BertTokenizer],
     categorical_encoders: dict[str, CategoricalEncoder],
