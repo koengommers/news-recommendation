@@ -1,0 +1,4 @@
+# @package _global_
+defaults:
+  - /model: default
+  - override /model/user_encoder: mean
