@@ -1,0 +1,11 @@
+# @package _global_
+defaults:
+  - /model: default
+  - /options: multi_interest
+  - /model/loss:
+    - prediction
+    - interest_disagreement
+
+model:
+  user_encoder:
+    n_interest_vectors: ???
