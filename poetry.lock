@@ -1181,6 +1181,17 @@ python-versions = "*"
 tests = ["pytest"]
 
 [[package]]
+name = "pyarrow"
+version = "12.0.0"
+description = "Python library for Apache Arrow"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+numpy = ">=1.16.6"
+
+[[package]]
 name = "pycparser"
 version = "2.21"
 description = "C parser in Python"
@@ -1824,7 +1835,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "flake8 (<5)", "pytest-co
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.12"
-content-hash = "03ccff9d8abe40d15efa8c036d1ffe0dd2b15e2b247942b51458f6f0560ffab9"
+content-hash = "3345498d7c582a2bc5017273df94af35fce6a4249c1957849fbbe5c7f12b7c6e"
 
 [metadata.files]
 antlr4-python3-runtime = []
@@ -1913,6 +1924,7 @@ prompt-toolkit = []
 psutil = []
 ptyprocess = []
 pure-eval = []
+pyarrow = []
 pycparser = []
 pygments = []
 pyrsistent = []
