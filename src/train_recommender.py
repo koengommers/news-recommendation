@@ -112,9 +112,9 @@ def main(cfg: DictConfig) -> None:
 
             optimizer.step()
 
-            if batch_num % cfg.num_batches_show_loss == 0:
+            if cfg.num_batches_show_loss and batch_num % cfg.num_batches_show_loss == 0:
                 tqdm.write(
-                    f"Loss after {batch_num} batches in epoch {epoch_num}: {total_train_loss / (batch_num)}"
+                    f"Average loss in epoch {epoch_num} after {batch_num} batches: {total_train_loss / (batch_num)}"
                 )
 
         tqdm.write(
