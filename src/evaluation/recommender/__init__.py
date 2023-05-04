@@ -67,7 +67,6 @@ def evaluate(
         for news_ids, batched_news_features in tqdm(
             news_dataloader,
             desc="Encoding news for evaluation",
-            disable=cfg.tqdm_disable,
         ):
             output = model.encode_news(batched_news_features)
             output = output.to(torch.device("cpu"))
@@ -87,7 +86,7 @@ def evaluate(
     results = []
     with torch.no_grad():
         for log_ids, clicked_news_vectors, mask, impression_ids, clicked in tqdm(
-            behaviors_dataloader, desc="Evaluating logs", disable=cfg.tqdm_disable
+            behaviors_dataloader, desc="Evaluating logs"
         ):
             if cfg.use_history_mask:
                 user_vectors = model.encode_user(clicked_news_vectors, mask)

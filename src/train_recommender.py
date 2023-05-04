@@ -91,14 +91,14 @@ def main(cfg: DictConfig) -> None:
     dev_metrics_per_epoch = []
     test_metrics_per_epoch = []
 
-    for epoch_num in tqdm(range(epochs + 1, cfg.epochs + 1), disable=cfg.tqdm_disable):
+    for epoch_num in tqdm(range(epochs + 1, cfg.epochs + 1)):
         total_train_loss = 0.0
 
         # Train
         model.train()
 
         for batch_num, (history, mask, candidate_news) in tqdm(
-            enumerate(dataloader, 1), total=len(dataloader), disable=cfg.tqdm_disable
+            enumerate(dataloader, 1), total=len(dataloader)
         ):
             optimizer.zero_grad()
 
