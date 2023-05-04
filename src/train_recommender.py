@@ -1,6 +1,7 @@
 import random
 
 import hydra
+from hydra.utils import to_absolute_path
 import pandas as pd
 import torch
 from omegaconf import DictConfig, OmegaConf
@@ -80,7 +81,7 @@ def main(cfg: DictConfig) -> None:
     epochs = 0
     if "checkpoint_file" in cfg:
         print(f"Restoring from checkpoint {cfg.checkpoint_file}")
-        checkpoint = torch.load(cfg.checkpoint_file)
+        checkpoint = torch.load(to_absolute_path(cfg.checkpoint_file))
         model.load_state_dict(checkpoint["model_state_dict"])
         optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
         torch.set_rng_state(checkpoint["cpu_rng_state"])
