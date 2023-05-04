@@ -125,6 +125,7 @@ def main(cfg: DictConfig) -> None:
         dev_metrics, dev_probs = evaluate(
             model, "dev", tokenizer, dataset.categorical_encoders, cfg
         )
+        dev_metrics["epoch"] = epoch_num
         dev_metrics_per_epoch.append(dev_metrics)
         dev_probs.to_feather(f"probs_{epoch_num}_dev.feather")
 
@@ -139,6 +140,7 @@ def main(cfg: DictConfig) -> None:
         test_metrics, test_probs = evaluate(
             model, "test", tokenizer, dataset.categorical_encoders, cfg
         )
+        test_metrics["epoch"] = epoch_num
         test_metrics_per_epoch.append(test_metrics)
         test_probs.to_feather(f"probs_{epoch_num}_test.feather")
 
@@ -162,8 +164,8 @@ def main(cfg: DictConfig) -> None:
         )
 
     # Save metrics
-    pd.DataFrame(dev_metrics_per_epoch).to_csv("metrics_dev.csv")
-    pd.DataFrame(test_metrics_per_epoch).to_csv("metrics_test.csv")
+    pd.DataFrame(dev_metrics_per_epoch).to_csv("metrics_dev.csv", index=False)
+    pd.DataFrame(test_metrics_per_epoch).to_csv("metrics_test.csv", index=False)
 
 
 if __name__ == "__main__":
