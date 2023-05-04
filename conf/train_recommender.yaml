@@ -11,7 +11,7 @@ num_words_abstract: 50
 history_length: 50
 num_batches_show_loss: 100
 tqdm_disable: false
-mind_variant: "small"
+mind_variant: "200k"
 use_history_mask: true
 num_workers: 4
 optimizer:
