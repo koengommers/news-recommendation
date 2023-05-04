@@ -3,3 +3,4 @@ data/
 outputs/
 multirun/
 .mypy_cache
+conf/local/default.yaml
