@@ -92,6 +92,11 @@ def _load_mind_data(
     )
 
 
+def _get_available_mind_splits(variant, data_dir=DEFAULT_DATA_DIR):
+    mind_path = get_mind_path(variant, data_dir=data_dir)
+    return [f.name for f in os.scandir(mind_path) if f.is_dir()]
+
+
 def load_behaviors(
     variant: str = "small",
     splits: Optional[list[str]] = None,
@@ -99,7 +104,7 @@ def load_behaviors(
     data_dir: str = DEFAULT_DATA_DIR,
 ) -> pd.DataFrame:
     if splits is None:
-        splits = SPLITS[variant]
+        splits = _get_available_mind_splits(variant, data_dir)
 
     column_names = ["log_id", "user", "time", "history", "impressions"]
     if columns is None:
@@ -122,7 +127,7 @@ def load_news(
     data_dir: str = DEFAULT_DATA_DIR,
 ) -> pd.DataFrame:
     if splits is None:
-        splits = SPLITS[variant]
+        splits = _get_available_mind_splits(variant, data_dir)
 
     available_columns = [
         "id",
