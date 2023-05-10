@@ -1,6 +1,7 @@
 from typing import Optional
 
 import numpy as np
+from sklearn.metrics.pairwise import pairwise_distances
 
 
 def mrr(y_true: list[int], y_scores: list[float]) -> np.floating:
@@ -23,6 +24,12 @@ def gs_score(embeddings: np.ndarray) -> Optional[np.floating]:
         for e in embeddings
     ]
     return np.mean(cosine_similarities)
+
+
+def ild(embeddings, distance_metric="cosine"):
+    distances = pairwise_distances(embeddings, metric=distance_metric)
+    triu_indices = np.triu_indices_from(distances, k=1)
+    return distances[triu_indices].mean()
 
 
 # taken from original MIND evaluation script: https://github.com/msnews/MIND/blob/master/evaluate.py
