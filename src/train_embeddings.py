@@ -51,7 +51,7 @@ def main(cfg: DictConfig) -> None:
 
     metrics_per_epoch = []
 
-    for epoch_num in tqdm(range(cfg.epochs)):
+    for epoch_num in tqdm(range(1, cfg.epochs + 1)):
         train_losses = []
 
         for target, context_positive in tqdm(dataloader):
@@ -84,7 +84,7 @@ def main(cfg: DictConfig) -> None:
             [f"{key}: {value:.5f}" for key, value in metrics.items()]
         )
 
-        tqdm.write(f"Epochs: {epoch_num + 1} | {metrics_string}")
+        tqdm.write(f"Epochs: {epoch_num} | {metrics_string}")
         print_closest_topics(
             embeddings,
             dataset.topic_encoder,
