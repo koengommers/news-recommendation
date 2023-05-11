@@ -1,7 +1,6 @@
-import pickle
-
 import hydra
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 from omegaconf import DictConfig
@@ -50,6 +49,8 @@ def main(cfg: DictConfig) -> None:
         ],
     )
 
+    metrics_per_epoch = []
+
     for epoch_num in tqdm(range(cfg.epochs)):
         train_losses = []
 
@@ -77,6 +78,8 @@ def main(cfg: DictConfig) -> None:
         embeddings = next(model.target_embeddings.parameters()).cpu().data.numpy()
         metrics = evaluate_embeddings(embeddings, dataset)
         metrics["Train loss"] = np.mean(train_losses)
+        metrics["epoch"] = epoch_num
+        metrics_per_epoch.append(metrics)
         metrics_string = " | ".join(
             [f"{key}: {value:.5f}" for key, value in metrics.items()]
         )
@@ -95,8 +98,15 @@ def main(cfg: DictConfig) -> None:
         )
 
         # Save embeddings
-        with open("embeddings.pickle", "wb") as f:
-            pickle.dump((embeddings, dataset.topic_encoder), f)
+        topic_embeddings = pd.DataFrame(
+            {
+                "subcategory": dataset.topic_encoder.classes_,
+                "embedding": list(embeddings),
+            }
+        )
+        topic_embeddings.to_feather(f"topic_embeddings_{epoch_num}.feather")
+
+    pd.DataFrame(metrics_per_epoch).to_csv("metrics.csv", index=False)
 
 
 if __name__ == "__main__":
