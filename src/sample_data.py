@@ -7,6 +7,7 @@ import pandas as pd
 from omegaconf import DictConfig
 
 from utils.data import get_mind_file, get_mind_path
+from utils.hydra import print_config
 
 
 def open_behaviors_file(variant, split, mode="r"):
@@ -111,36 +112,37 @@ def sample_news(source, variant_name):
 
 @hydra.main(version_base=None, config_path="../conf", config_name="sample_data")
 def sample_data(cfg: DictConfig):
-    random.seed(cfg.seed)
+    random.seed(cfg.data.seed)
+    print_config(cfg)
 
     # Step 1: Make directories for new dataset
     splits = ["train", "test", "dev"]
     for split in splits:
-        new_data_path = get_mind_path(cfg.variant_name, split)
+        new_data_path = get_mind_path(cfg.data.target, split)
         os.makedirs(new_data_path, exist_ok=True)
 
     # Step 2: Sample from the user ids
     print("Sampling users...")
     user_ids = get_unique_user_ids()
     sorted_users = sorted(list(user_ids))  # sort to make it deterministic
-    sampled_users = set(random.sample(sorted_users, cfg.num_users))
+    sampled_users = set(random.sample(sorted_users, cfg.data.num_users))
 
     # Step 3: Select behaviors from those users
     print("Selecting behaviors...")
     user_counts, log_counts = sample_behaviors(
-        sampled_users, cfg.source, cfg.variant_name
+        sampled_users, cfg.data.source, cfg.data.target
     )
 
     # Step 4: Copy the news used in those behaviors
     print("Copying news...")
-    news_counts = sample_news(cfg.source, cfg.variant_name)
+    news_counts = sample_news(cfg.data.source, cfg.data.target)
 
     # Step 5: Stats
     stats = pd.DataFrame(
         [user_counts, log_counts, news_counts], index=["n_users", "n_logs", "n_news"]
     ).transpose()
     print(stats)
-    stats.to_csv(os.path.join(get_mind_path(cfg.variant_name), "stats.csv"))
+    stats.to_csv(os.path.join(get_mind_path(cfg.data.target), "stats.csv"))
 
 
 if __name__ == "__main__":

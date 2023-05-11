@@ -46,7 +46,7 @@ def evaluate(
     tokenizer.eval()
 
     news_dataset = NewsDataset(
-        cfg.mind_variant,
+        cfg.data.mind_variant,
         split,
         tokenizer,
         cfg.num_words_title,
@@ -72,7 +72,7 @@ def evaluate(
             output = output.to(torch.device("cpu"))
             news_vectors.update(dict(zip(news_ids, output)))
 
-    behaviors_dataset = BehaviorsDataset(cfg.mind_variant, split, news_vectors)
+    behaviors_dataset = BehaviorsDataset(cfg.data.mind_variant, split, news_vectors)
     behaviors_dataloader = DataLoader(
         behaviors_dataset,
         batch_size=cfg.batch_size,

@@ -1,6 +1,9 @@
+defaults:
+  - _self_
+  - data: mind_200k
+
 seed: 515
 epochs: 5
-mind_variant: "200k"
 embedding_dim: 100
 batch_size: 128
 learning_rate: 0.001

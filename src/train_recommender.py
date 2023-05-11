@@ -4,7 +4,7 @@ import hydra
 import pandas as pd
 import torch
 from hydra.utils import to_absolute_path
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -13,6 +13,7 @@ from evaluation.recommender import evaluate
 from models.news_recommender import NewsRecommender
 from utils.collate import collate_fn
 from utils.context import context
+from utils.hydra import print_config
 from utils.tokenize import NltkTokenizer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -20,9 +21,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 @hydra.main(version_base=None, config_path="../conf", config_name="train_recommender")
 def main(cfg: DictConfig) -> None:
-    print("========== Config ==========")
-    print(OmegaConf.to_yaml(cfg))
-    print("============================")
+    print_config(cfg)
 
     random.seed(cfg.seed)
     torch.manual_seed(cfg.seed)
@@ -32,7 +31,7 @@ def main(cfg: DictConfig) -> None:
 
     # Load dataset
     dataset = RecommenderTrainingDataset(
-        cfg.mind_variant,
+        cfg.data.mind_variant,
         tokenizer,
         cfg.negative_sampling_ratio,
         cfg.num_words_title,

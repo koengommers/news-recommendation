@@ -1,6 +1,8 @@
 defaults:
   - _self_
 
+  - data: mind_200k
+
   # optional local config for machine specific settings
   - optional local: default
 
@@ -18,7 +20,6 @@ num_words_title: 20
 num_words_abstract: 50
 history_length: 50
 num_batches_show_loss: 100
-mind_variant: "200k"
 use_history_mask: true
 num_workers: 4
 optimizer:

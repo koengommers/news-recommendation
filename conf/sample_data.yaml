@@ -1,4 +1,2 @@
-seed: 468
-variant_name: "200k"
-num_users: 200000
-source: "large"
+defaults:
+  - data: mind_200k
