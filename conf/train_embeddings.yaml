@@ -1,6 +1,7 @@
 defaults:
   - _self_
   - data: mind_200k
+  - hydra: default
 
 seed: 515
 epochs: 5

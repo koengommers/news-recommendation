@@ -1,16 +1,10 @@
 defaults:
   - _self_
-
   - data: mind_200k
+  - hydra: default
 
   # optional local config for machine specific settings
   - optional local: default
-
-hydra:
-  run:
-    dir: outputs/${now:%Y-%m-%d}/${now:%H-%M-%S.%f}
-  job:
-    chdir: true
 
 seed: 704
 epochs: 5
