@@ -114,8 +114,10 @@ def load_behaviors(
     behaviors = _load_mind_data(
         "behaviors.tsv", variant, splits, columns, column_indices, data_dir
     )
-    behaviors.history = behaviors.history.fillna("").str.split()
-    behaviors.impressions = behaviors.impressions.str.split()
+    if "history" in columns:
+        behaviors.history = behaviors.history.fillna("").str.split()
+    if "impressions" in columns:
+        behaviors.impressions = behaviors.impressions.str.split()
     return behaviors
 
 
@@ -161,8 +163,10 @@ def load_users(
     splits: Optional[list[str]] = None,
     data_dir: str = DEFAULT_DATA_DIR,
 ) -> pd.DataFrame:
-    behaviors = load_behaviors(variant, splits, data_dir=data_dir)
-    users = behaviors.groupby("user").first()
+    behaviors = load_behaviors(
+        variant, splits, columns=["user", "history"], data_dir=data_dir
+    )
+    users = behaviors.drop_duplicates(subset="user").set_index("user")
     return users
 
 
