@@ -3,6 +3,7 @@ defaults:
   - data: mind_200k
   - hydra: default
 
+tags: [dev]
 seed: 515
 epochs: 10
 embedding_dim: 100
