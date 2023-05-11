@@ -1,6 +1,8 @@
 __pycache__/
+.mypy_cache
+.pytest_cache
+
 /data/
 outputs/
 multirun/
-.mypy_cache
 conf/local/default.yaml
