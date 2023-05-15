@@ -78,6 +78,24 @@ class Run:
     def hydra(self):
         return self._load_yaml(".hydra/hydra.yaml").hydra
 
+    def __hash__(self):
+        return hash(self.path)
+
+    def __lt__(self, obj):
+        return ((self.path) < (obj.path))
+  
+    def __gt__(self, obj):
+        return ((self.path) > (obj.path))
+  
+    def __le__(self, obj):
+        return ((self.path) <= (obj.path))
+  
+    def __ge__(self, obj):
+        return ((self.path) >= (obj.path))
+  
+    def __eq__(self, obj):
+        return (self.path == obj.path)
+
 
 class RunCollection(list):
     def __init__(self, runs):
