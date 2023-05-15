@@ -27,6 +27,10 @@ def gs_score(embeddings: np.ndarray) -> Optional[np.floating]:
 
 
 def ild(embeddings, distance_metric="cosine"):
+    if len(embeddings) == 0:
+        return None
+    if len(embeddings) == 1:
+        return 0
     distances = pairwise_distances(embeddings, metric=distance_metric)
     triu_indices = np.triu_indices_from(distances, k=1)
     return distances[triu_indices].mean()
