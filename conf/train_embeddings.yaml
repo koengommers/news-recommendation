@@ -3,6 +3,9 @@ defaults:
   - data: mind_200k
   - hydra: default
 
+  # optional local config for machine specific settings
+  - optional local: default
+
 tags: [dev]
 seed: 515
 epochs: 10
