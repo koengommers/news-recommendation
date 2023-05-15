@@ -3,8 +3,8 @@ from typing import Optional
 import torch
 import torch.nn as nn
 
-from models.modules.attention.additive import AdditiveAttention
-from utils.context import context
+from src.models.modules.attention.additive import AdditiveAttention
+from src.utils.context import context
 
 
 class AdditiveAttentionUserEncoder(nn.Module):

@@ -8,13 +8,13 @@ from sklearn.metrics import roc_auc_score
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from datasets.behaviors import BehaviorsDataset, behaviors_collate_fn
-from datasets.news import NewsDataset
-from evaluation.metrics import mrr_score, ndcg_score
-from models.news_recommender import NewsRecommender
-from utils.collate import collate_fn
-from utils.encode import CategoricalEncoder
-from utils.tokenize import BertTokenizer, NltkTokenizer
+from src.datasets.behaviors import BehaviorsDataset, behaviors_collate_fn
+from src.datasets.news import NewsDataset
+from src.evaluation.metrics import mrr_score, ndcg_score
+from src.models.news_recommender import NewsRecommender
+from src.utils.collate import collate_fn
+from src.utils.encode import CategoricalEncoder
+from src.utils.tokenize import BertTokenizer, NltkTokenizer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

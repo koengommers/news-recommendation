@@ -1,1 +1,1 @@
-_target_: models.click_predictors.inner_product.InnerProductClickPredictor
+_target_: src.models.click_predictors.inner_product.InnerProductClickPredictor

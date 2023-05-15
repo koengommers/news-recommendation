@@ -1,2 +1,2 @@
-_target_: utils.tokenize.BertTokenizer
+_target_: src.utils.tokenize.BertTokenizer
 pretrained_model_name: ${model.news_encoder.pretrained_model_name}

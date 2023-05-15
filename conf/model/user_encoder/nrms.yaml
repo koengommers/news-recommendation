@@ -1,2 +1,2 @@
-_target_: models.user_encoders.nrms.NRMSUserEncoder
+_target_: src.models.user_encoders.nrms.NRMSUserEncoder
 num_attention_heads: 15

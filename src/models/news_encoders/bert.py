@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from transformers import AutoConfig, AutoModel
 
-from models.modules.attention.additive import AdditiveAttention
+from src.models.modules.attention.additive import AdditiveAttention
 
 
 class BERTNewsEncoder(nn.Module):

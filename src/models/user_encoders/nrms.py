@@ -2,9 +2,9 @@ from typing import Optional
 
 import torch
 
-from models.modules.attention.additive import AdditiveAttention
-from models.modules.attention.multihead_self import MultiHeadSelfAttention
-from utils.context import context
+from src.models.modules.attention.additive import AdditiveAttention
+from src.models.modules.attention.multihead_self import MultiHeadSelfAttention
+from src.utils.context import context
 
 
 class NRMSUserEncoder(torch.nn.Module):

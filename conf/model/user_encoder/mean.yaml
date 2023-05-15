@@ -1,1 +1,1 @@
-_target_: models.user_encoders.mean.MeanUserEncoder
+_target_: src.models.user_encoders.mean.MeanUserEncoder

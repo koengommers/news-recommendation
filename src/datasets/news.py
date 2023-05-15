@@ -2,8 +2,8 @@ from typing import Callable, Tuple, Union
 
 from torch.utils.data import Dataset
 
-from utils.data import load_news
-from utils.encode import CategoricalEncoder
+from src.utils.data import load_news
+from src.utils.encode import CategoricalEncoder
 
 TokenizerOutput = Union[list[int], dict[str, list[int]]]
 NewsItem = dict[str, Union[TokenizerOutput, int]]

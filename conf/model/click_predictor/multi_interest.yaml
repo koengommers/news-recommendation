@@ -1,2 +1,2 @@
-_target_: models.click_predictors.multi_interest.MultiInterestClickPredictor
+_target_: src.models.click_predictors.multi_interest.MultiInterestClickPredictor
 aggregate_method: weighted

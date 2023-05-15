@@ -4,7 +4,7 @@ defaults:
 
 model:
   news_encoder:
-    _target_: models.news_encoders.nrms.NRMSNewsEncoder
+    _target_: src.models.news_encoders.nrms.NRMSNewsEncoder
     word_embedding_dim: 300
     use_pretrained_embeddings: true
     freeze_pretrained_embeddings: false

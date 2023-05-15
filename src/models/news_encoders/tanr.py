@@ -4,9 +4,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from models.modules.attention.additive import AdditiveAttention
-from utils.context import context
-from utils.data import load_pretrained_embeddings
+from src.models.modules.attention.additive import AdditiveAttention
+from src.utils.context import context
+from src.utils.data import load_pretrained_embeddings
 
 
 class TANRNewsEncoder(nn.Module):

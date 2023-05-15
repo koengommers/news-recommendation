@@ -4,7 +4,7 @@ defaults:
 
 model:
   news_encoder:
-    _target_: models.news_encoders.sentence_transformer.SentenceTransformerNewsEncoder
+    _target_: src.models.news_encoders.sentence_transformer.SentenceTransformerNewsEncoder
     pretrained_model_name: all-MiniLM-L12-v2
 
 tokenizer:

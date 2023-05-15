@@ -4,7 +4,7 @@ defaults:
 
 model:
   news_encoder:
-    _target_: models.news_encoders.bert.BERTNewsEncoder
+    _target_: src.models.news_encoders.bert.BERTNewsEncoder
     pretrained_model_name: bert-base-uncased
     pooling_method: pooler
     finetune_n_last_layers: 2

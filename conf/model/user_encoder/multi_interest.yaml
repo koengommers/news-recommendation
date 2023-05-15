@@ -1,2 +1,2 @@
-_target_: models.user_encoders.multi_interest.MultiInterestUserEncoder
+_target_: src.models.user_encoders.multi_interest.MultiInterestUserEncoder
 n_interest_vectors: 32

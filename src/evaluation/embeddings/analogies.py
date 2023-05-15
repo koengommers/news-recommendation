@@ -5,7 +5,7 @@ from sklearn.metrics import top_k_accuracy_score
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import LabelEncoder
 
-from evaluation.metrics import mrr
+from src.evaluation.metrics import mrr
 
 TOPIC_GROUPS = [
     # Media and their celebrities

@@ -1,1 +1,1 @@
-_target_: utils.tokenize.NltkTokenizer
+_target_: src.utils.tokenize.NltkTokenizer

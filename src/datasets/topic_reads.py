@@ -2,7 +2,7 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import Dataset
 
-from utils.data import DEFAULT_DATA_DIR, load_news, load_users
+from src.utils.data import DEFAULT_DATA_DIR, load_news, load_users
 
 
 def news_to_topics(news: pd.DataFrame) -> pd.DataFrame:

@@ -4,9 +4,9 @@ from typing import Union
 import pandas as pd
 from torch.utils.data import Dataset
 
-from utils.data import load_behaviors, load_news
-from utils.encode import CategoricalEncoder
-from utils.tokenize import BertTokenizer, NltkTokenizer
+from src.utils.data import load_behaviors, load_news
+from src.utils.encode import CategoricalEncoder
+from src.utils.tokenize import BertTokenizer, NltkTokenizer
 
 
 def filter_positive_samples(impressions: list[str]) -> list[str]:

@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.metrics import fowlkes_mallows_score, silhouette_score
 
-from datasets.topic_reads import TopicReadsDataset
+from src.datasets.topic_reads import TopicReadsDataset
 
 
 def get_main_category(categories: pd.DataFrame, subcategory: str) -> str:

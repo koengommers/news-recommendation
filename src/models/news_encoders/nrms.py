@@ -4,10 +4,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from models.modules.attention.additive import AdditiveAttention
-from models.modules.attention.multihead_self import MultiHeadSelfAttention
-from utils.context import context
-from utils.data import load_pretrained_embeddings
+from src.models.modules.attention.additive import AdditiveAttention
+from src.models.modules.attention.multihead_self import MultiHeadSelfAttention
+from src.utils.context import context
+from src.utils.data import load_pretrained_embeddings
 
 
 class NRMSNewsEncoder(nn.Module):

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from utils.context import context
+from src.utils.context import context
 
 
 class TargetAwareAttention(nn.Module):

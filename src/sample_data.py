@@ -4,10 +4,15 @@ import time
 
 import hydra
 import pandas as pd
+import pyrootutils
 from omegaconf import DictConfig
 
-from utils.data import get_mind_file, get_mind_path
-from utils.hydra import print_config
+pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
+
+# make linter ignore "Module level import not at top of file"
+# ruff: noqa: E402
+from src.utils.data import get_mind_file, get_mind_path
+from src.utils.hydra import print_config
 
 
 def open_behaviors_file(variant, split, mode="r"):

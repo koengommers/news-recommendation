@@ -3,7 +3,7 @@ from typing import Tuple
 import torch
 from torch.utils.data import Dataset
 
-from utils.data import load_behaviors
+from src.utils.data import load_behaviors
 
 
 def behaviors_collate_fn(batch):

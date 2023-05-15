@@ -1,16 +1,21 @@
 import hydra
 import numpy as np
 import pandas as pd
+import pyrootutils
 import torch
 import torch.nn as nn
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from datasets.topic_reads import TopicReadsDataset
-from evaluation.embeddings import evaluate_embeddings
-from evaluation.utils import print_closest_topics
-from models.skipgram import Skipgram
+pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
+
+# make linter ignore "Module level import not at top of file"
+# ruff: noqa: E402
+from src.datasets.topic_reads import TopicReadsDataset
+from src.evaluation.embeddings import evaluate_embeddings
+from src.evaluation.utils import print_closest_topics
+from src.models.skipgram import Skipgram
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

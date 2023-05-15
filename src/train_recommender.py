@@ -2,19 +2,24 @@ import random
 
 import hydra
 import pandas as pd
+import pyrootutils
 import torch
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from datasets.recommender_training import RecommenderTrainingDataset
-from evaluation.recommender import evaluate
-from models.news_recommender import NewsRecommender
-from utils.collate import collate_fn
-from utils.context import context
-from utils.hydra import print_config
-from utils.tokenize import NltkTokenizer
+pyrootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
+
+# make linter ignore "Module level import not at top of file"
+# ruff: noqa: E402
+from src.datasets.recommender_training import RecommenderTrainingDataset
+from src.evaluation.recommender import evaluate
+from src.models.news_recommender import NewsRecommender
+from src.utils.collate import collate_fn
+from src.utils.context import context
+from src.utils.hydra import print_config
+from src.utils.tokenize import NltkTokenizer
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
