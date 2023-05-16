@@ -23,11 +23,11 @@ def open_news_file(variant, split, mode="r"):
     return open(get_mind_file(variant, split, "news.tsv"), mode)
 
 
-def get_unique_user_ids(source_splits=["train", "dev"]):
+def get_unique_user_ids(source, source_splits=["train", "dev"]):
     user_ids = set()
 
     for split in source_splits:
-        with open_behaviors_file("large", split) as f:
+        with open_behaviors_file(source, split) as f:
             for line in f:
                 user_ids.add(line.split()[1])
 
@@ -128,7 +128,7 @@ def sample_data(cfg: DictConfig):
 
     # Step 2: Sample from the user ids
     print("Sampling users...")
-    user_ids = get_unique_user_ids()
+    user_ids = get_unique_user_ids(cfg.data.source)
     sorted_users = sorted(list(user_ids))  # sort to make it deterministic
     sampled_users = set(random.sample(sorted_users, cfg.data.num_users))
 
