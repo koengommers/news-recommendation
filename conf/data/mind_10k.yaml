@@ -1,0 +1,5 @@
+seed: 468
+num_users: 10000
+source: small
+target: ${data.num_users}_${data.seed}
+mind_variant: ${data.target}
