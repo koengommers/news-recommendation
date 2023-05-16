@@ -16,7 +16,6 @@ from src.utils.collate import collate_fn
 from src.utils.encode import CategoricalEncoder
 from src.utils.tokenize import BertTokenizer, NltkTokenizer
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 TokenizerOutput = Union[list[int], dict[str, list[int]]]
 
@@ -42,6 +41,8 @@ def evaluate(
     categorical_encoders: dict[str, CategoricalEncoder],
     cfg: DictConfig,
 ) -> tuple[dict[str, float], pd.DataFrame]:
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     model.eval()
     tokenizer.eval()
 

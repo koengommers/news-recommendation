@@ -21,7 +21,6 @@ from src.utils.context import context
 from src.utils.hydra import print_config
 from src.utils.tokenize import NltkTokenizer
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="train_recommender")
@@ -30,6 +29,8 @@ def main(cfg: DictConfig) -> None:
 
     random.seed(cfg.seed)
     torch.manual_seed(cfg.seed)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Set up tokenizer
     tokenizer = hydra.utils.instantiate(cfg.tokenizer)
