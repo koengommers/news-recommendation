@@ -1,3 +1,4 @@
+from collections import defaultdict
 import random
 
 import hydra
@@ -20,7 +21,6 @@ from src.utils.collate import collate_fn
 from src.utils.context import context
 from src.utils.hydra import print_config
 from src.utils.tokenize import NltkTokenizer
-
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="train_recommender")
@@ -105,8 +105,7 @@ def main(cfg: DictConfig) -> None:
         else None
     )
 
-    dev_metrics_per_epoch = []
-    test_metrics_per_epoch = []
+    metrics_per_epoch = defaultdict(list)
 
     for epoch_num in tqdm(range(epochs + 1, cfg.epochs + 1)):
         total_train_loss = 0.0
@@ -140,35 +139,21 @@ def main(cfg: DictConfig) -> None:
             f"Epochs: {epoch_num} | Average train loss: {total_train_loss / len(dataloader)}"
         )
 
-        # Evaluate on dev
-        dev_metrics, dev_probs = evaluate(
-            model, "dev", tokenizer, dataset.categorical_encoders, cfg
-        )
-        dev_metrics["epoch"] = epoch_num
-        dev_metrics_per_epoch.append(dev_metrics)
-        dev_probs.to_feather(f"probs_{epoch_num}_dev.feather")
-
-        tqdm.write(
-            "(dev) "
-            + " | ".join(
-                f"{metric}: {dev_metrics[metric]:.5f}" for metric in dev_metrics
+        # Evaluate
+        for split in cfg.eval_splits:
+            metrics, probs = evaluate(
+                model, split, tokenizer, dataset.categorical_encoders, cfg
             )
-        )
+            metrics["epoch"] = epoch_num
+            metrics_per_epoch[split].append(metrics)
+            probs.to_feather(f"probs_{epoch_num}_{split}.feather")
 
-        # Evaluate on test
-        test_metrics, test_probs = evaluate(
-            model, "test", tokenizer, dataset.categorical_encoders, cfg
-        )
-        test_metrics["epoch"] = epoch_num
-        test_metrics_per_epoch.append(test_metrics)
-        test_probs.to_feather(f"probs_{epoch_num}_test.feather")
-
-        tqdm.write(
-            "(test) "
-            + " | ".join(
-                f"{metric}: {test_metrics[metric]:.5f}" for metric in test_metrics
+            tqdm.write(
+                f"({split}) "
+                + " | ".join(
+                    f"{metric}: {metrics[metric]:.5f}" for metric in metrics
+                )
             )
-        )
 
         # Save model
         torch.save(
@@ -183,8 +168,8 @@ def main(cfg: DictConfig) -> None:
         )
 
     # Save metrics
-    pd.DataFrame(dev_metrics_per_epoch).to_csv("metrics_dev.csv", index=False)
-    pd.DataFrame(test_metrics_per_epoch).to_csv("metrics_test.csv", index=False)
+    for split in metrics_per_epoch:
+        pd.DataFrame(metrics_per_epoch[split]).to_csv(f"metrics_{split}.csv", index=False)
 
 
 if __name__ == "__main__":
