@@ -93,6 +93,18 @@ def main(cfg: DictConfig) -> None:
         torch.cuda.set_rng_state(checkpoint["gpu_rng_state"])
         epochs = checkpoint["epochs"]
 
+    scheduler = (
+        hydra.utils.instantiate(
+            cfg.lr_scheduler,
+            optimizer,
+            epochs=cfg.epochs,
+            last_epoch=epochs-1,
+            steps_per_epoch=len(dataloader),
+        )
+        if "lr_scheduler" in cfg
+        else None
+    )
+
     dev_metrics_per_epoch = []
     test_metrics_per_epoch = []
 
@@ -116,6 +128,8 @@ def main(cfg: DictConfig) -> None:
             loss.backward()
 
             optimizer.step()
+            if scheduler:
+                scheduler.step()
 
             if cfg.num_batches_show_loss and batch_num % cfg.num_batches_show_loss == 0:
                 tqdm.write(
