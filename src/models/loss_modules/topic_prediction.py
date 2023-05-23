@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from utils.context import context
+from src.utils.context import context
 
 
 class TopicPredictionLoss(nn.Module):
