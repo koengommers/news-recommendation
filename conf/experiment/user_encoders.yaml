@@ -1,0 +1,16 @@
+# @package _global_
+defaults:
+  - /model/click_predictor: inner_product
+  - /model/loss: prediction
+
+features:
+  - title
+
+hydra:
+  mode: MULTIRUN
+  sweeper:
+    params:
+      +model/news_encoder: nrms,tanr
+      +model/user_encoder: nrms,additive_attention,mean
+
+

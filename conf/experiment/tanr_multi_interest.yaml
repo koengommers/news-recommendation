@@ -1,0 +1,14 @@
+# @package _global_
+defaults:
+  - /model: tanr
+  - /options: multi_interest
+  - /model/loss:
+    - prediction
+    - interest_disagreement
+    - topic_prediction
+
+hydra:
+  mode: MULTIRUN
+  sweeper:
+    params:
+      model.user_encoder.n_interest_vectors: 1,4,8,16,32
