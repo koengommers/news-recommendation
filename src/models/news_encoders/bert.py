@@ -37,8 +37,6 @@ class BERTNewsEncoder(nn.Module):
                 range(self.bert_config.num_hidden_layers - finetune_n_last_layers)
             )
             for name, param in self.bert_model.named_parameters():
-                if name.startswith("embedding"):
-                    param.requires_grad = False
                 if (
                     name.startswith("encoder")
                     and int(name.split(".")[2]) in freeze_layers
