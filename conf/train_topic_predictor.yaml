@@ -1,0 +1,21 @@
+defaults:
+  - _self_
+  - data: mind_200k
+  - hydra: default
+
+  # optional local config for machine specific settings
+  - optional local: default
+
+tags: [dev]
+seed: 704
+epochs: 5
+batch_size: 64
+num_words_title: 20
+num_words_abstract: 50
+num_batches_show_loss: 100
+num_workers: 0
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 0.0001
+features:
+  - title
