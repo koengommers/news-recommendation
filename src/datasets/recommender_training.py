@@ -6,7 +6,7 @@ from torch.utils.data import Dataset
 
 from src.utils.data import load_behaviors, load_news
 from src.utils.encode import CategoricalEncoder
-from src.utils.tokenize import BertTokenizer, NltkTokenizer
+from src.utils.tokenize import NltkTokenizer, PLMTokenizer
 
 
 def filter_positive_samples(impressions: list[str]) -> list[str]:
@@ -17,7 +17,7 @@ def filter_negative_samples(impressions: list[str]) -> list[str]:
     return [sample[:-2] for sample in impressions if sample.endswith("-0")]
 
 
-Tokenizer = Union[NltkTokenizer, BertTokenizer]
+Tokenizer = Union[NltkTokenizer, PLMTokenizer]
 TokenizerOutput = Union[list[int], dict[str, list[int]]]
 NewsItem = dict[str, Union[TokenizerOutput, int]]
 

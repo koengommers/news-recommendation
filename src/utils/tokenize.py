@@ -34,7 +34,7 @@ class NltkTokenizer:
             return ints[:length]
 
 
-class BertTokenizer:
+class PLMTokenizer:
     def __init__(self, pretrained_model_name: str, is_sentence_transformer=False):
         if is_sentence_transformer:
             self.tokenizer: Any = SentenceTransformer(pretrained_model_name).tokenizer

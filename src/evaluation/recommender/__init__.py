@@ -14,8 +14,7 @@ from src.evaluation.metrics import mrr_score, ndcg_score
 from src.models.news_recommender import NewsRecommender
 from src.utils.collate import collate_fn
 from src.utils.encode import CategoricalEncoder
-from src.utils.tokenize import BertTokenizer, NltkTokenizer
-
+from src.utils.tokenize import NltkTokenizer, PLMTokenizer
 
 TokenizerOutput = Union[list[int], dict[str, list[int]]]
 
@@ -37,7 +36,7 @@ def calculate_metrics(result):
 def evaluate(
     model: NewsRecommender,
     split: str,
-    tokenizer: Union[NltkTokenizer, BertTokenizer],
+    tokenizer: Union[NltkTokenizer, PLMTokenizer],
     categorical_encoders: dict[str, CategoricalEncoder],
     cfg: DictConfig,
 ) -> tuple[dict[str, float], pd.DataFrame]:

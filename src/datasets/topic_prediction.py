@@ -4,9 +4,9 @@ from torch.utils.data import Dataset
 
 from src.utils.data import load_news
 from src.utils.encode import CategoricalEncoder
-from src.utils.tokenize import BertTokenizer, NltkTokenizer
+from src.utils.tokenize import NltkTokenizer, PLMTokenizer
 
-Tokenizer = Union[NltkTokenizer, BertTokenizer]
+Tokenizer = Union[NltkTokenizer, PLMTokenizer]
 TokenizerOutput = Union[list[int], dict[str, list[int]]]
 NewsItem = dict[str, Union[TokenizerOutput, int]]
 
@@ -52,9 +52,7 @@ class TopicPredictionDataset(Dataset):
         else:
             columns = self.news_features
 
-        news = load_news(
-            self.mind_variant, columns=columns
-        )
+        news = load_news(self.mind_variant, columns=columns)
 
         parsed_news: list[NewsItem] = []
         for _, row in news.iterrows():
