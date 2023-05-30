@@ -80,8 +80,15 @@ def main(cfg: DictConfig) -> None:
     # Loss
     loss_fn = torch.nn.CrossEntropyLoss()
 
+    metrics = {
+        "accuracy": accuracy_score,
+        "balanced accuracy": balanced_accuracy_score,
+    }
+
     for epoch_num in tqdm(range(1, cfg.epochs + 1)):
         model.train()
+        train_probs: list[list[int]] = []
+        train_categories: list[int] = []
         running_loss = 0.0
 
         for batch_num, (news, categories) in tqdm(
@@ -90,6 +97,8 @@ def main(cfg: DictConfig) -> None:
             optimizer.zero_grad()
 
             probs = model(news)
+            train_probs = train_probs + probs.tolist()
+            train_categories = train_categories + categories.tolist()
             loss = loss_fn(probs, categories.to(device))
             running_loss += loss.item()
 
@@ -105,24 +114,25 @@ def main(cfg: DictConfig) -> None:
                 )
                 running_loss = 0.0
 
+        train_results = {
+            key: fn(train_categories, np.argmax(train_probs, axis=1))
+            for key, fn in metrics.items()
+        }
+        tqdm.write("(train) " + " | ".join(f"{metric}: {train_results[metric]:.5f}" for metric in train_results))
+
         model.eval()
-        all_probs: list[list[int]] = []
-        all_categories: list[int] = []
+        test_probs: list[list[int]] = []
+        test_categories: list[int] = []
         with torch.no_grad():
             for news, categories in tqdm(test_dataloader):
                 probs = model(news)
-                all_probs = all_probs + probs.tolist()
-                all_categories = all_categories + categories.tolist()
-
-        metrics = {
-            "accuracy": accuracy_score,
-            "balanced accuracy": balanced_accuracy_score,
-        }
-        results = {
-            key: fn(all_categories, np.argmax(all_probs, axis=1))
+                test_probs = test_probs + probs.tolist()
+                test_categories = test_categories + categories.tolist()
+        test_results = {
+            key: fn(test_categories, np.argmax(test_probs, axis=1))
             for key, fn in metrics.items()
         }
-        tqdm.write(" | ".join(f"{metric}: {results[metric]:.5f}" for metric in results))
+        tqdm.write("(test) " + " | ".join(f"{metric}: {test_results[metric]:.5f}" for metric in test_results))
 
 
 if __name__ == "__main__":
