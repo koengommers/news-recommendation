@@ -1,7 +1,9 @@
 import random
+from time import time
 
 import hydra
 import numpy as np
+import pandas as pd
 import pyrootutils
 import torch
 from omegaconf import DictConfig
@@ -85,8 +87,11 @@ def main(cfg: DictConfig) -> None:
         "balanced accuracy": balanced_accuracy_score,
     }
 
+    results = []
+
     for epoch_num in tqdm(range(1, cfg.epochs + 1)):
         model.train()
+        train_start_time = time()
         train_probs: list[list[int]] = []
         train_categories: list[int] = []
         running_loss = 0.0
@@ -115,12 +120,22 @@ def main(cfg: DictConfig) -> None:
                 running_loss = 0.0
 
         train_results = {
-            key: fn(train_categories, np.argmax(train_probs, axis=1))
-            for key, fn in metrics.items()
+            "split": "train",
+            "epoch": epoch_num,
+            "duration": time() - train_start_time,
         }
-        tqdm.write("(train) " + " | ".join(f"{metric}: {train_results[metric]:.5f}" for metric in train_results))
+        for key, fn in metrics.items():
+            train_results[key] = fn(train_categories, np.argmax(train_probs, axis=1))
+        results.append(train_results)
+        tqdm.write(
+            " | ".join(
+                f"{key}: {val:.5f}" if isinstance(val, float) else f"{key}: {val}"
+                for key, val in train_results.items()
+            )
+        )
 
         model.eval()
+        test_start_time = time()
         test_probs: list[list[int]] = []
         test_categories: list[int] = []
         with torch.no_grad():
@@ -128,11 +143,23 @@ def main(cfg: DictConfig) -> None:
                 probs = model(news)
                 test_probs = test_probs + probs.tolist()
                 test_categories = test_categories + categories.tolist()
+
         test_results = {
-            key: fn(test_categories, np.argmax(test_probs, axis=1))
-            for key, fn in metrics.items()
+            "split": "test",
+            "epoch": epoch_num,
+            "duration": time() - test_start_time,
         }
-        tqdm.write("(test) " + " | ".join(f"{metric}: {test_results[metric]:.5f}" for metric in test_results))
+        for key, fn in metrics.items():
+            test_results[key] = fn(test_categories, np.argmax(test_probs, axis=1))
+        results.append(test_results)
+        tqdm.write(
+            " | ".join(
+                f"{key}: {val:.5f}" if isinstance(val, float) else f"{key}: {val}"
+                for key, val in test_results.items()
+            )
+        )
+
+        pd.DataFrame(results).to_csv("results.csv", index=False)
 
 
 if __name__ == "__main__":
