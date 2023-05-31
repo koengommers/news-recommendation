@@ -8,6 +8,7 @@ import pyrootutils
 import torch
 from omegaconf import DictConfig
 from sklearn.metrics import accuracy_score, balanced_accuracy_score
+from torch.cuda.amp.grad_scaler import GradScaler
 from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 
@@ -32,7 +33,8 @@ def main(cfg: DictConfig) -> None:
     random.seed(cfg.seed)
     torch.manual_seed(cfg.seed)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device_type = "cuda" if torch.cuda.is_available() else "cpu"
+    device = torch.device(device_type)
 
     # Set up tokenizer
     tokenizer = hydra.utils.instantiate(cfg.tokenizer)
@@ -78,6 +80,7 @@ def main(cfg: DictConfig) -> None:
 
     # Init optimizer
     optimizer = hydra.utils.instantiate(cfg.optimizer, params=model.parameters())
+    scaler = GradScaler()
 
     # Loss
     loss_fn = torch.nn.CrossEntropyLoss()
@@ -101,14 +104,19 @@ def main(cfg: DictConfig) -> None:
         ):
             optimizer.zero_grad()
 
-            probs = model(news)
-            train_probs = train_probs + probs.tolist()
-            train_categories = train_categories + categories.tolist()
-            loss = loss_fn(probs, categories.to(device))
-            running_loss += loss.item()
+            with torch.autocast(
+                device_type,
+                dtype=torch.float16 if device_type == "cuda" else torch.bfloat16,
+            ):
+                probs = model(news)
+                train_probs = train_probs + probs.tolist()
+                train_categories = train_categories + categories.tolist()
+                loss = loss_fn(probs, categories.to(device))
+                running_loss += loss.item()
 
-            loss.backward()
-            optimizer.step()
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
             if cfg.num_batches_show_loss and batch_num % cfg.num_batches_show_loss == 0:
                 average_loss = running_loss / cfg.num_batches_show_loss
