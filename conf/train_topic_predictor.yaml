@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - data: mind_200k
+  - data: mind_large
   - hydra: default
 
   # optional local config for machine specific settings
