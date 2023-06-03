@@ -1,5 +1,5 @@
-from collections import defaultdict
 import random
+from collections import defaultdict
 
 import hydra
 import pandas as pd
@@ -98,7 +98,7 @@ def main(cfg: DictConfig) -> None:
             cfg.lr_scheduler,
             optimizer,
             epochs=cfg.epochs,
-            last_epoch=epochs-1,
+            last_epoch=epochs - 1,
             steps_per_epoch=len(dataloader),
         )
         if "lr_scheduler" in cfg
@@ -150,9 +150,7 @@ def main(cfg: DictConfig) -> None:
 
             tqdm.write(
                 f"({split}) "
-                + " | ".join(
-                    f"{metric}: {metrics[metric]:.5f}" for metric in metrics
-                )
+                + " | ".join(f"{metric}: {metrics[metric]:.5f}" for metric in metrics)
             )
 
         # Save model
@@ -169,7 +167,9 @@ def main(cfg: DictConfig) -> None:
 
     # Save metrics
     for split in metrics_per_epoch:
-        pd.DataFrame(metrics_per_epoch[split]).to_csv(f"metrics_{split}.csv", index=False)
+        pd.DataFrame(metrics_per_epoch[split]).to_csv(
+            f"metrics_{split}.csv", index=False
+        )
 
 
 if __name__ == "__main__":

@@ -1,8 +1,8 @@
 from typing import Optional
-import torch.nn.functional as F
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from src.utils.context import context
 
@@ -39,7 +39,9 @@ class MultiInterestUserEncoder(nn.Module):
         query_vector_dim: int = 200,
     ) -> None:
         super(MultiInterestUserEncoder, self).__init__()
-        self.poly_attention = PolyAttention(news_embedding_dim, n_interest_vectors, query_vector_dim)
+        self.poly_attention = PolyAttention(
+            news_embedding_dim, n_interest_vectors, query_vector_dim
+        )
 
     def forward(
         self, clicked_news_vectors: torch.Tensor, mask: Optional[torch.Tensor] = None
