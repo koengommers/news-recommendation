@@ -31,7 +31,9 @@ class HieRecUserEncoder(nn.Module):
         )
         self.category_embedding = nn.Embedding(num_categories, categories_embed_dim)
 
-        self.num_clicks_embedding = nn.Embedding(history_length, num_clicked_embed_dim)
+        self.num_clicks_embedding = nn.Embedding(
+            history_length + 1, num_clicked_embed_dim
+        )
 
         self.news_attention_dense = nn.Linear(news_embedding_dim, 1, bias=False)
         self.subcategory_attention_dense = nn.Linear(
@@ -50,22 +52,26 @@ class HieRecUserEncoder(nn.Module):
         history_length = news["vectors"].size(1)
         subcategory_mask = F.one_hot(news["subcategory"], self.num_subcategories)
         category_mask = F.one_hot(news["category"], self.num_categories)
-        subcategory_to_category = subcategory_mask.transpose(1, 2).matmul(category_mask)
+        subcategory_to_category = subcategory_mask.float().transpose(1, 2).matmul(category_mask.float()).long()
 
         # Subtopic-level interest representation
-        news_attention_scores = self.news_attention_dense(news["vectors"])
-        if mask:
+        news_attention_scores = self.news_attention_dense(news["vectors"]).squeeze(
+            dim=-1
+        )
+        if mask is not None:
             news_attention_scores.masked_fill_(~mask.bool(), 1e-30)
-        news_attention_scores = news_attention_scores.expand(
-            batch_size, history_length, self.num_subcategories
-        ).clone()
+        news_attention_scores = (
+            news_attention_scores.unsqueeze(dim=-1)
+            .expand(batch_size, history_length, self.num_subcategories)
+            .clone()
+        )
         news_attention_scores.masked_fill_(~subcategory_mask.bool(), 1e-30)
         news_attention_weights = F.softmax(news_attention_scores, dim=1)
         subcategory_news_repr = torch.bmm(
             news_attention_weights.transpose(1, 2), news["vectors"]
         )
         subcategory_embedding = self.subcategory_embedding(
-            torch.arange(self.num_subcategories)
+            torch.arange(self.num_subcategories, device=subcategory_news_repr.device)
         )
         subcategory_repr = subcategory_news_repr + subcategory_embedding
 
@@ -89,7 +95,7 @@ class HieRecUserEncoder(nn.Module):
         category_subcategory_repr = torch.bmm(
             subcategory_attention_weights.transpose(1, 2), subcategory_repr
         )
-        category_embedding = self.category_embedding(torch.arange(self.num_categories))
+        category_embedding = self.category_embedding(torch.arange(self.num_categories, device=category_subcategory_repr.device))
         category_repr = category_subcategory_repr + category_embedding
 
         category_clicks = category_mask.sum(dim=1)

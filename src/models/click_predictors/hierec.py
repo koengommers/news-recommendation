@@ -47,7 +47,6 @@ class HieRecClickPredictor(nn.Module):
         user_score = torch.bmm(
             candidate_news["vectors"], user_repr.unsqueeze(dim=-1)
         ).squeeze(dim=-1)
-        print(user_score.size())
 
         # Final score
         return (
