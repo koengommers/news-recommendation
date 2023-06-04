@@ -1,0 +1,3 @@
+_target_: src.models.click_predictors.hierec.HieRecClickPredictor
+lambda_t: 0.15
+lambda_s: 0.7

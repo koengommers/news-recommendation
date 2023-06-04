@@ -1,0 +1,3 @@
+_target_: src.models.user_encoders.hierec.HieRecUserEncoder
+history_length: ${history_length}
+num_clicked_embed_dim: 50
