@@ -9,7 +9,7 @@ def test_user_encoder():
     batch_size = 4
     history_length = 40
     news_embedding_dim = 300
-    categories_embed_dim = 300
+    categories_embed_dim = news_embedding_dim
     num_clicked_embed_dim = 50
     num_categories = 15
     num_subcategories = 200
@@ -26,7 +26,6 @@ def test_user_encoder():
         num_subcategories,
         num_categories,
         news_embedding_dim,
-        categories_embed_dim,
         history_length,
         num_clicked_embed_dim,
     )
@@ -59,7 +58,7 @@ def test_click_predictor():
     batch_size = 4
     n_candidate_news = 5
     news_embedding_dim = 300
-    categories_embed_dim = 300
+    categories_embed_dim = news_embedding_dim
     num_categories = 15
     num_subcategories = 200
     lambda_t = 0.15
