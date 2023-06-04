@@ -1,3 +1,4 @@
+from collections import defaultdict
 import random
 from typing import Union
 
@@ -37,7 +38,7 @@ class RecommenderTrainingDataset(Dataset):
         num_words_abstract: int = 50,
         history_length: int = 50,
         news_features: list[str] = ["title"],
-        categorical_encoders: dict[str, CategoricalEncoder] = {},
+        categorical_encoders: dict[str, CategoricalEncoder] = defaultdict(CategoricalEncoder),
     ):
         self.mind_variant = mind_variant
         self.split = "train"
@@ -61,9 +62,11 @@ class RecommenderTrainingDataset(Dataset):
 
     @property
     def num_categories(self) -> int:
-        if "category" not in self.categorical_encoders:
-            return 0
         return self.categorical_encoders["category"].n_categories + 1
+
+    @property
+    def num_subcategories(self) -> int:
+        return self.categorical_encoders["subcategory"].n_categories + 1
 
     def prepare_logs(self) -> pd.DataFrame:
         behaviors = load_behaviors(self.mind_variant, splits=[self.split])
@@ -105,7 +108,6 @@ class RecommenderTrainingDataset(Dataset):
         return behaviors
 
     def prepare_news(self) -> dict[str, NewsItem]:
-        categorical_features = ["category", "subcategory"]
         textual_features = ["title", "abstract"]
 
         news = load_news(
@@ -121,11 +123,13 @@ class RecommenderTrainingDataset(Dataset):
                         row[feature].lower(),
                         getattr(self, f"num_words_{feature}"),
                     )
-                if feature in categorical_features:
-                    if feature not in self.categorical_encoders:
-                        self.categorical_encoders[feature] = CategoricalEncoder()
+                if feature == "category":
                     article[feature] = self.categorical_encoders[feature].encode(
-                        row[feature]
+                        row["category"]
+                    )
+                if feature == "subcategory":
+                    article[feature] = self.categorical_encoders[feature].encode(
+                        (row["category"], row["subcategory"])
                     )
             parsed_news[str(index)] = article
 

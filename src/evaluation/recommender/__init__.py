@@ -44,6 +44,8 @@ def evaluate(
 
     model.eval()
     tokenizer.eval()
+    for encoder in categorical_encoders.values():
+        encoder.eval()
 
     news_dataset = NewsDataset(
         cfg.data.mind_variant,

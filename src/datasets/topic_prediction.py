@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Union
 
 from torch.utils.data import Dataset
@@ -29,7 +30,7 @@ class TopicPredictionDataset(Dataset):
         self.num_words_title = num_words_title
         self.num_words_abstract = num_words_abstract
         self.news_features = news_features
-        self.categorical_encoders: dict[str, CategoricalEncoder] = {}
+        self.categorical_encoders: dict[str, CategoricalEncoder] = defaultdict(CategoricalEncoder)
 
         self.news = self.prepare_news()
 
@@ -44,7 +45,6 @@ class TopicPredictionDataset(Dataset):
         return self.categorical_encoders["category"].n_categories + 1
 
     def prepare_news(self) -> list[NewsItem]:
-        categorical_features = ["category", "subcategory"]
         textual_features = ["title", "abstract"]
 
         if "category" not in self.news_features:
@@ -63,11 +63,13 @@ class TopicPredictionDataset(Dataset):
                         row[feature].lower(),
                         getattr(self, f"num_words_{feature}"),
                     )
-                if feature in categorical_features:
-                    if feature not in self.categorical_encoders:
-                        self.categorical_encoders[feature] = CategoricalEncoder()
+                if feature == "category":
                     article[feature] = self.categorical_encoders[feature].encode(
-                        row[feature]
+                        row["category"]
+                    )
+                if feature == "subcategory":
+                    article[feature] = self.categorical_encoders[feature].encode(
+                        (row["category"], row["subcategory"])
                     )
             parsed_news.append(article)
 

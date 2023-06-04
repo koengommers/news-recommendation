@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Callable, Tuple, Union
 
 from torch.utils.data import Dataset
@@ -21,7 +22,7 @@ class NewsDataset(Dataset):
         tokenizer: Callable[[str, int], TokenizerOutput],
         num_words_title: int = 20,
         num_words_abstract: int = 50,
-        categorical_encoders: dict[str, CategoricalEncoder] = {},
+        categorical_encoders: dict[str, CategoricalEncoder] = defaultdict(CategoricalEncoder),
         news_features: list[str] = ["title"],
     ):
         self.mind_variant = mind_variant
@@ -35,7 +36,6 @@ class NewsDataset(Dataset):
         self.news = self.prepare_news()
 
     def prepare_news(self) -> list[Tuple[str, NewsItem]]:
-        categorical_features = ["category", "subcategory"]
         textual_features = ["title", "abstract"]
 
         news = load_news(
@@ -51,11 +51,13 @@ class NewsDataset(Dataset):
                         row[feature].lower(),
                         getattr(self, f"num_words_{feature}"),
                     )
-                if feature in categorical_features:
-                    if feature not in self.categorical_encoders:
-                        self.categorical_encoders[feature] = CategoricalEncoder()
+                if feature == "category":
                     article[feature] = self.categorical_encoders[feature].encode(
-                        row[feature]
+                        row["category"]
+                    )
+                if feature == "subcategory":
+                    article[feature] = self.categorical_encoders[feature].encode(
+                        (row["category"], row["subcategory"])
                     )
             parsed_news.append((str(index), article))
 

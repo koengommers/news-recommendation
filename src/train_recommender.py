@@ -46,6 +46,7 @@ def main(cfg: DictConfig) -> None:
         cfg.features,
     )
     context.add("num_categories", dataset.num_categories)
+    context.add("num_subcategories", dataset.num_subcategories)
     context.add("num_words", dataset.num_words)
     if isinstance(tokenizer, NltkTokenizer):
         context.add("token2int", tokenizer.t2i)
