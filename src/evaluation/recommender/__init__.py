@@ -15,6 +15,7 @@ from src.models.news_recommender import NewsRecommender
 from src.utils.collate import collate_fn
 from src.utils.encode import CategoricalEncoder
 from src.utils.tokenize import NltkTokenizer, PLMTokenizer
+from src.utils.utils import add_first_dim, get_user_repr_from_index, object_to_device
 
 TokenizerOutput = Union[list[int], dict[str, list[int]]]
 
@@ -71,8 +72,12 @@ def evaluate(
             desc="Encoding news for evaluation",
         ):
             output = model.encode_news(batched_news_features)
-            output = output.to(torch.device("cpu"))
-            news_vectors.update(dict(zip(news_ids, output)))
+            output = object_to_device(output, torch.device("cpu"))
+            for i, id in enumerate(news_ids):
+                if isinstance(output, dict):
+                    news_vectors[id] = { key: value[i] for key, value in output.items()}
+                else:
+                    news_vectors[id] = output[i]
 
     behaviors_dataset = BehaviorsDataset(cfg.data.mind_variant, split, news_vectors)
     behaviors_dataloader = DataLoader(
@@ -96,11 +101,15 @@ def evaluate(
                 user_vectors = model.encode_user(clicked_news_vectors)
 
             for i in range(len(log_ids)):
-                impressions = torch.stack(
-                    [news_vectors[id] for id in impression_ids[i]]
-                ).unsqueeze(0)
+                impressions = object_to_device(
+                    add_first_dim(
+                        collate_fn([news_vectors[id] for id in impression_ids[i]])
+                    ),
+                    device
+                )
+                user_repr = get_user_repr_from_index(user_vectors, i)
                 probs = model.rank(
-                    impressions.to(device), user_vectors[i].unsqueeze(0)
+                    impressions, user_repr
                 ).squeeze(0)
                 probs_list = probs.tolist()
                 results.append(

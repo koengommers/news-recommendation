@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from src.utils.utils import object_to_device
+
 
 class NewsRecommender(nn.Module):
     def __init__(self, news_encoder, user_encoder, click_predictor, loss_modules):
@@ -20,10 +22,16 @@ class NewsRecommender(nn.Module):
         return next(self.parameters()).device
 
     def encode_news(self, news):
-        return self.news_encoder(news)
+        news = object_to_device(news, self.device)
+        news_vectors = self.news_encoder(news)
+        if not self.pass_features:
+            return news_vectors
+
+        news["vectors"] = news_vectors
+        return news
 
     def encode_user(self, clicked_news, mask=None):
-        clicked_news = clicked_news.to(self.device)
+        clicked_news = object_to_device(clicked_news, self.device)
         if mask is not None:
             return self.user_encoder(clicked_news, mask.to(self.device))
         return self.user_encoder(clicked_news)
@@ -32,17 +40,8 @@ class NewsRecommender(nn.Module):
         return self.click_predictor(candidate_news, user_vector)
 
     def forward(self, candidate_news, clicked_news, labels, mask=None):
-        candidate_news_vectors = self.encode_news(candidate_news)
-        clicked_news_vectors = self.encode_news(clicked_news)
-
-        if self.pass_features:
-            candidate_news_repr = candidate_news
-            candidate_news_repr["vectors"] = candidate_news_vectors
-            clicked_news_repr = clicked_news
-            clicked_news_repr["vectors"] = clicked_news_vectors
-        else:
-            candidate_news_repr = candidate_news_vectors
-            clicked_news_repr = clicked_news_vectors
+        candidate_news_repr = self.encode_news(candidate_news)
+        clicked_news_repr = self.encode_news(clicked_news)
 
         user_vector = self.encode_user(clicked_news_repr, mask)
         click_probability = self.rank(candidate_news_repr, user_vector)
@@ -53,8 +52,8 @@ class NewsRecommender(nn.Module):
                     {
                         "candidate_news": candidate_news,
                         "clicked_news": clicked_news,
-                        "candidate_news_vectors": candidate_news_vectors,
-                        "clicked_news_vectors": clicked_news_vectors,
+                        "candidate_news_vectors": candidate_news_repr,
+                        "clicked_news_vectors": clicked_news_repr,
                         "user_vector": user_vector,
                         "click_probability": click_probability,
                         "labels": labels,
