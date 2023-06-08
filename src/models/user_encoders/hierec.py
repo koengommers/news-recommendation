@@ -19,7 +19,7 @@ class HieRecUserEncoder(nn.Module):
         num_categories=1,
         news_embedding_dim=300,
         history_length=50,
-        num_clicked_embed_dim=50,
+        num_clicked_embed_dim=128,
     ):
         super().__init__()
         self.num_subcategories = num_subcategories
