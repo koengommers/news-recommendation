@@ -34,14 +34,13 @@ class HieRecUserEncoder(nn.Module):
         self.num_clicks_embedding = nn.Embedding(
             history_length + 1, num_clicked_embed_dim
         )
+        self.num_clicks_scorer = nn.Linear(num_clicked_embed_dim, 1)
 
         self.news_attention_dense = nn.Linear(news_embedding_dim, 1, bias=False)
         self.subcategory_attention_dense = nn.Linear(
-            categories_embed_dim + num_clicked_embed_dim, 1, bias=False
+            categories_embed_dim, 1, bias=False
         )
-        self.category_attention_dense = nn.Linear(
-            categories_embed_dim + num_clicked_embed_dim, 1, bias=False
-        )
+        self.category_attention_dense = nn.Linear(categories_embed_dim, 1, bias=False)
 
     @property
     def requires_features(self):
@@ -87,8 +86,10 @@ class HieRecUserEncoder(nn.Module):
 
         # Topic-level interest representation
         subcategory_clicks_embedding = self.num_clicks_embedding(subcategory_clicks)
-        subcategory_attention_scores = self.subcategory_attention_dense(
-            torch.cat((subcategory_repr, subcategory_clicks_embedding), dim=2)
+        subcategory_clicks_scores = self.num_clicks_scorer(subcategory_clicks_embedding)
+        subcategory_repr_scores = self.subcategory_attention_dense(subcategory_repr)
+        subcategory_attention_scores = (
+            subcategory_repr_scores + subcategory_clicks_scores
         )
         subcategory_attention_scores = subcategory_attention_scores.expand(
             batch_size, self.num_subcategories, self.num_categories
@@ -112,9 +113,9 @@ class HieRecUserEncoder(nn.Module):
 
         # User-level interest representation
         category_clicks_embedding = self.num_clicks_embedding(category_clicks)
-        category_attention_scores = self.category_attention_dense(
-            torch.cat((category_repr, category_clicks_embedding), dim=2)
-        )
+        category_clicks_scores = self.num_clicks_scorer(category_clicks_embedding)
+        category_repr_scores = self.category_attention_dense(category_repr)
+        category_attention_scores = category_repr_scores + category_clicks_scores
         category_attention_weights = F.softmax(category_attention_scores, dim=1)
         user_repr = torch.bmm(
             category_attention_weights.transpose(1, 2), category_repr
