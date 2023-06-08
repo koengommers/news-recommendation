@@ -3,6 +3,9 @@ from typing import Optional
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+
+from src.utils.utils import masked_softmax
 
 
 class ScaledDotProductAttention(nn.Module):
@@ -18,10 +21,10 @@ class ScaledDotProductAttention(nn.Module):
         attn_mask: Optional[torch.Tensor] = None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
         scores = torch.matmul(Q, K.transpose(-1, -2)) / np.sqrt(self.d_k)
-        scores = torch.exp(scores)
         if attn_mask is not None:
-            scores = scores * attn_mask.unsqueeze(-2)
-        attn = scores / (torch.sum(scores, dim=-1, keepdim=True) + 1e-8)
+            attn = masked_softmax(scores, attn_mask.unsqueeze(-2), dim=-1)
+        else:
+            attn = F.softmax(scores, dim=-1)
 
         context = torch.matmul(attn, V)
         return context, attn

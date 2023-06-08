@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from src.utils.context import context
+from src.utils.utils import masked_softmax
 
 
 class HieRecUserEncoder(nn.Module):
@@ -69,8 +70,7 @@ class HieRecUserEncoder(nn.Module):
             .expand(batch_size, history_length, self.num_subcategories)
             .clone()
         )
-        news_attention_scores = news_attention_scores - 100 * (1 - subcategory_mask)
-        news_attention_weights = F.softmax(news_attention_scores, dim=1)
+        news_attention_weights = masked_softmax(news_attention_scores, subcategory_mask, dim=1)
         subcategory_news_repr = torch.bmm(
             news_attention_weights.transpose(1, 2), news["vectors"]
         )
@@ -94,10 +94,7 @@ class HieRecUserEncoder(nn.Module):
         subcategory_attention_scores = subcategory_attention_scores.expand(
             batch_size, self.num_subcategories, self.num_categories
         ).clone()
-        subcategory_attention_scores = subcategory_attention_scores - 100 * (
-            1 - subcategory_to_category
-        )
-        subcategory_attention_weights = F.softmax(subcategory_attention_scores, dim=1)
+        subcategory_attention_weights = masked_softmax(subcategory_attention_scores, subcategory_to_category, dim=1)
         category_subcategory_repr = torch.bmm(
             subcategory_attention_weights.transpose(1, 2), subcategory_repr
         )

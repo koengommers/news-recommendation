@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from src.utils.utils import masked_softmax
+
 
 class AdditiveAttention(torch.nn.Module):
     """
@@ -36,10 +38,13 @@ class AdditiveAttention(torch.nn.Module):
         # batch_size, candidate_size, query_vector_dim
         proj = torch.tanh(self.projection(x))
         attn_scores = torch.matmul(proj, self.query_vector)
+
         if mask is not None:
-            attn_scores.masked_fill_(mask == 0, 1e-30)
-        # batch_size, candidate_size
-        attn_weights = F.softmax(attn_scores, dim=1)
+            # batch_size, candidate_size
+            attn_weights = masked_softmax(attn_scores, mask, dim=1)
+        else:
+            attn_weights = F.softmax(attn_scores, dim=1)
+
         # batch_size, candidate_vector_dim
         repr = torch.bmm(attn_weights.unsqueeze(dim=1), x).squeeze(dim=1)
         return repr

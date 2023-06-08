@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from src.utils.context import context
+from src.utils.utils import masked_softmax
 
 
 class PolyAttention(nn.Module):
@@ -18,13 +19,15 @@ class PolyAttention(nn.Module):
             )
         )
 
-    def forward(self, x, attn_mask=None):
+    def forward(self, x, attn_mask: Optional[torch.Tensor] = None):
         proj = torch.tanh(self.projection(x))
         attn_scores = torch.matmul(proj, self.context_codes)
         attn_scores = attn_scores.transpose(1, 2)
         if attn_mask is not None:
-            attn_scores.masked_fill_(attn_mask.unsqueeze(1) == 0, 1e-30)
-        attn_weights = F.softmax(attn_scores, dim=2)
+            # batch_size, candidate_size
+            attn_weights = masked_softmax(attn_scores, attn_mask.unsqueeze(1), dim=2)
+        else:
+            attn_weights = F.softmax(attn_scores, dim=2)
         poly_repr = torch.bmm(attn_weights, x)
 
         return poly_repr
