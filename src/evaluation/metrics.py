@@ -14,16 +14,15 @@ def mrr(y_true: list[int], y_scores: list[float]) -> np.floating:
     return np.mean(1 / ranks_np)
 
 
-def gs_score(embeddings: np.ndarray) -> Optional[np.floating]:
+def gs_score(embeddings: np.ndarray, distance_metric="cosine") -> Optional[np.floating]:
     if len(embeddings) == 0:
         return None
 
     center = np.mean(embeddings, axis=0)
-    cosine_similarities = [
-        np.dot(center, e) / (np.linalg.norm(e) * np.linalg.norm(center))
-        for e in embeddings
-    ]
-    return np.mean(cosine_similarities)
+    cosine_similarities = pairwise_distances(
+        embeddings, center.reshape(1, -1), metric=distance_metric
+    )
+    return cosine_similarities.mean()
 
 
 def ild(embeddings, distance_metric="cosine"):
