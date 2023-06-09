@@ -30,7 +30,9 @@ class TopicPredictionDataset(Dataset):
         self.num_words_title = num_words_title
         self.num_words_abstract = num_words_abstract
         self.news_features = news_features
-        self.categorical_encoders: dict[str, CategoricalEncoder] = defaultdict(CategoricalEncoder)
+        self.categorical_encoders: dict[str, CategoricalEncoder] = defaultdict(
+            CategoricalEncoder
+        )
 
         self.news = self.prepare_news()
 

@@ -1,5 +1,5 @@
-from collections import defaultdict
 import random
+from collections import defaultdict
 from typing import Union
 
 import pandas as pd
@@ -38,7 +38,9 @@ class RecommenderTrainingDataset(Dataset):
         num_words_abstract: int = 50,
         history_length: int = 50,
         news_features: list[str] = ["title"],
-        categorical_encoders: dict[str, CategoricalEncoder] = defaultdict(CategoricalEncoder),
+        categorical_encoders: dict[str, CategoricalEncoder] = defaultdict(
+            CategoricalEncoder
+        ),
     ):
         self.mind_variant = mind_variant
         self.split = "train"

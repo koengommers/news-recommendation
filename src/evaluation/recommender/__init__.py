@@ -75,7 +75,7 @@ def evaluate(
             output = object_to_device(output, torch.device("cpu"))
             for i, id in enumerate(news_ids):
                 if isinstance(output, dict):
-                    news_vectors[id] = { key: value[i] for key, value in output.items()}
+                    news_vectors[id] = {key: value[i] for key, value in output.items()}
                 else:
                     news_vectors[id] = output[i]
 
@@ -105,12 +105,10 @@ def evaluate(
                     add_first_dim(
                         collate_fn([news_vectors[id] for id in impression_ids[i]])
                     ),
-                    device
+                    device,
                 )
                 user_repr = get_user_repr_from_index(user_vectors, i)
-                probs = model.rank(
-                    impressions, user_repr
-                ).squeeze(0)
+                probs = model.rank(impressions, user_repr).squeeze(0)
                 probs_list = probs.tolist()
                 results.append(
                     {"log_id": log_ids[i], "clicked": clicked[i], "probs": probs_list}

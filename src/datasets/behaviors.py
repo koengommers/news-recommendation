@@ -38,7 +38,8 @@ class BehaviorsDataset(Dataset):
         news_repr_example = next(iter(self.news_vectors.values()))
         if isinstance(news_repr_example, dict):
             self.news_vectors["<PAD>"] = {
-                key: torch.zeros(value.size(), dtype=value.dtype) for key, value in news_repr_example.items()
+                key: torch.zeros(value.size(), dtype=value.dtype)
+                for key, value in news_repr_example.items()
             }
         else:
             self.news_vectors["<PAD>"] = torch.zeros(news_repr_example.size())

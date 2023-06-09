@@ -22,7 +22,9 @@ class NewsDataset(Dataset):
         tokenizer: Callable[[str, int], TokenizerOutput],
         num_words_title: int = 20,
         num_words_abstract: int = 50,
-        categorical_encoders: dict[str, CategoricalEncoder] = defaultdict(CategoricalEncoder),
+        categorical_encoders: dict[str, CategoricalEncoder] = defaultdict(
+            CategoricalEncoder
+        ),
         news_features: list[str] = ["title"],
     ):
         self.mind_variant = mind_variant
