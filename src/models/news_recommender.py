@@ -52,8 +52,12 @@ class NewsRecommender(nn.Module):
                     {
                         "candidate_news": candidate_news,
                         "clicked_news": clicked_news,
-                        "candidate_news_vectors": candidate_news_repr,
-                        "clicked_news_vectors": clicked_news_repr,
+                        "candidate_news_vectors": candidate_news_repr
+                        if not self.pass_features
+                        else candidate_news_repr["vectors"],
+                        "clicked_news_vectors": clicked_news_repr
+                        if not self.pass_features
+                        else clicked_news_repr["vectors"],
                         "user_vector": user_vector,
                         "click_probability": click_probability,
                         "labels": labels,
