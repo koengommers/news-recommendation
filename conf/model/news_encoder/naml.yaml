@@ -1,0 +1,14 @@
+# @package _global_
+defaults:
+  - /tokenizer: nltk
+
+model:
+  news_encoder:
+    _target_: src.models.news_encoders.naml.NAMLNewsEncoder
+    word_embedding_dim: 300
+    use_pretrained_embeddings: true
+    freeze_pretrained_embeddings: false
+    window_size: 3
+    num_filters: 300
+    query_vector_dim: 200
+    category_embedding_dim: 100

@@ -1,0 +1,12 @@
+# @package _global_
+defaults:
+  - /model/news_encoder: naml
+  - /model/user_encoder: additive_attention
+  - /model/click_predictor: inner_product
+  - /model/loss: prediction
+
+features:
+  - title
+  - abstract
+  - category
+  - subcategory

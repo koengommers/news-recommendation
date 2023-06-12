@@ -154,6 +154,10 @@ def load_news(
     if drop_duplicates:
         news = news.drop_duplicates(subset="id")
         assert news is not None
+
+    if "abstract" in columns:
+        news["abstract"] = news["abstract"].fillna("")
+
     news = news.set_index("id")
     return news
 
