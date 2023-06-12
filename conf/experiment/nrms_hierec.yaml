@@ -1,14 +1,9 @@
 # @package _global_
 defaults:
+  - /model: nrms
   - /options: hierec
 
 features:
   - title
   - category
   - subcategory
-
-hydra:
-  mode: MULTIRUN
-  sweeper:
-    params:
-      +model: nrms,tanr

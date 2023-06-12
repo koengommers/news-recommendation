@@ -1,0 +1,9 @@
+# @package _global_
+defaults:
+  - /model: tanr
+  - /options: hierec
+
+features:
+  - title
+  - category
+  - subcategory
