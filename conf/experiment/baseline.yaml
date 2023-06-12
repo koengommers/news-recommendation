@@ -3,4 +3,4 @@ hydra:
   mode: MULTIRUN
   sweeper:
     params:
-      +model: nrms,tanr
+      +model: nrms,tanr,naml
