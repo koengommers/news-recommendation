@@ -7,6 +7,7 @@ import pyrootutils
 import torch
 from hydra.utils import to_absolute_path
 from omegaconf import DictConfig
+from torch.cuda.amp.grad_scaler import GradScaler
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -30,7 +31,8 @@ def main(cfg: DictConfig) -> None:
     random.seed(cfg.seed)
     torch.manual_seed(cfg.seed)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device_type = "cuda" if torch.cuda.is_available() else "cpu"
+    device = torch.device(device_type)
 
     # Set up tokenizer
     tokenizer = hydra.utils.instantiate(cfg.tokenizer)
@@ -83,6 +85,9 @@ def main(cfg: DictConfig) -> None:
     # Init optimizer
     optimizer = hydra.utils.instantiate(cfg.optimizer, params=model.parameters())
 
+    amp_enabled = cfg.enable_amp and device_type == "cuda"
+    scaler = GradScaler(enabled=amp_enabled)
+
     # Optionally load from checkpoint
     epochs = 0
     if "checkpoint_file" in cfg:
@@ -119,15 +124,20 @@ def main(cfg: DictConfig) -> None:
         ):
             optimizer.zero_grad()
 
-            labels = torch.zeros(cfg.batch_size).long().to(device)
-            if cfg.use_history_mask:
-                loss = model(candidate_news, history, labels, mask)
-            else:
-                loss = model(candidate_news, history, labels)
-            total_train_loss += loss.item()
-            loss.backward()
+            with torch.autocast(
+                "cuda", dtype=torch.float16, enabled=amp_enabled
+            ):
+                labels = torch.zeros(cfg.batch_size).long().to(device)
+                if cfg.use_history_mask:
+                    loss = model(candidate_news, history, labels, mask)
+                else:
+                    loss = model(candidate_news, history, labels)
+                total_train_loss += loss.item()
 
-            optimizer.step()
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+
             if scheduler:
                 scheduler.step()
 

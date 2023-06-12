@@ -18,6 +18,7 @@ history_length: 50
 num_batches_show_loss: 100
 use_history_mask: true
 num_workers: 4
+enable_amp: true
 optimizer:
   _target_: torch.optim.Adam
   lr: 0.0002
