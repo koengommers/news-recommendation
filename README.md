@@ -1,6 +1,6 @@
 # Personalized News Recommendation
 
-This repository contains PyTorch implementations of several personalized news recommendation methods, used for my MSc thesis in Artificial Intelligence at University of Amsterdam.
+This repository contains PyTorch implementations of several personalized news recommendation methods, created for my MSc thesis in Artificial Intelligence at University of Amsterdam.
 
 Many news recommendation models follow the same general architecture with similar components: a news encoder, user encoder and click predictor. That is the perspective this repository relies on. The individual components are available as modules and through configuration they are combined to form the model.
 
