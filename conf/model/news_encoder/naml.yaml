@@ -9,6 +9,6 @@ model:
     use_pretrained_embeddings: true
     freeze_pretrained_embeddings: false
     window_size: 3
-    num_filters: 300
+    num_filters: 400
     query_vector_dim: 200
     category_embedding_dim: 100
