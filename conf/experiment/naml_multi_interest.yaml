@@ -1,0 +1,13 @@
+# @package _global_
+defaults:
+  - /model: naml
+  - /options: multi_interest
+  - /model/loss:
+    - prediction
+    - interest_disagreement
+
+hydra:
+  mode: MULTIRUN
+  sweeper:
+    params:
+      model.user_encoder.n_interest_vectors: 1,4,16,32,48,64

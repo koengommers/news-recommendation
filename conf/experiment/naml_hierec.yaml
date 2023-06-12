@@ -1,0 +1,10 @@
+# @package _global_
+defaults:
+  - /model: naml
+  - /options: hierec
+
+features:
+  - title
+  - abstract
+  - category
+  - subcategory
