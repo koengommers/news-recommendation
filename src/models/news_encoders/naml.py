@@ -134,15 +134,16 @@ class NAMLNewsEncoder(torch.nn.Module):
 
     def stack_batches(self, news):
         batch_size, n_news = news["category"].size()
+        stacked_news = {}
         for key in news:
             if news[key].dim() == 3:
-                news[key] = news[key].reshape(-1, news[key].size(-1))
+                stacked_news[key] = news[key].reshape(-1, news[key].size(-1))
             elif news[key].dim() == 2:
-                news[key] = news[key].reshape(-1)
+                stacked_news[key] = news[key].reshape(-1)
 
         unstack = partial(self.unstack_batches, batch_size=batch_size, n_news=n_news)
 
-        return news, unstack
+        return stacked_news, unstack
 
     @staticmethod
     def unstack_batches(news_vectors, batch_size, n_news):
