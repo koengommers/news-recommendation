@@ -57,7 +57,10 @@ class ElementEncoder(torch.nn.Module):
         self.linear = nn.Linear(embedding_dim, output_dim)
 
     def forward(self, element):
-        return F.relu(self.linear(self.embedding(element)))
+        element_embedding = self.embedding(element)
+        element_vector = self.linear(element_embedding)
+        activated_element_vector = F.relu(element_vector)
+        return activated_element_vector
 
 
 class NAMLNewsEncoder(torch.nn.Module):
