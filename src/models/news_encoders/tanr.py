@@ -20,7 +20,7 @@ class TANRNewsEncoder(nn.Module):
         freeze_pretrained_embeddings: bool = False,
         dropout_probability: float = 0.2,
         window_size: int = 3,
-        num_filters: int = 300,
+        num_filters: int = 400,
         query_vector_dim: int = 200,
     ):
         super(TANRNewsEncoder, self).__init__()
