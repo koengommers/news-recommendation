@@ -15,7 +15,9 @@ class AdditiveAttentionUserEncoder(nn.Module):
         query_vector_dim: int = 200,
     ):
         super(AdditiveAttentionUserEncoder, self).__init__()
-        self.additive_attention = AdditiveAttention(query_vector_dim, news_embedding_dim)
+        self.additive_attention = AdditiveAttention(
+            query_vector_dim, news_embedding_dim
+        )
 
     def forward(
         self, clicked_news_vector: torch.Tensor, mask: Optional[torch.Tensor] = None
