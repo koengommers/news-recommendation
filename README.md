@@ -35,7 +35,7 @@ Output can be found in the `outputs/` directory
 
 ## Custom model configurations
 
-It is possible to combine model components to create a custom model. A new entry could be added tothe  `conf/model/` directory, or it could be done through command line arguments. For example, NRMS model with TANR user encoder:
+It is possible to combine model components to create a custom model. A new entry could be added to the  `conf/model/` directory, or it could be done through command line arguments. For example, NRMS model with TANR user encoder:
 
     poetry run python src/train_recommender.py +model=nrms model/user_encoder=additive_attention
 
