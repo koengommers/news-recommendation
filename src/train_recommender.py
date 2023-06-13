@@ -124,9 +124,7 @@ def main(cfg: DictConfig) -> None:
         ):
             optimizer.zero_grad()
 
-            with torch.autocast(
-                "cuda", dtype=torch.float16, enabled=amp_enabled
-            ):
+            with torch.autocast("cuda", dtype=torch.float16, enabled=amp_enabled):
                 labels = torch.zeros(cfg.batch_size).long().to(device)
                 if cfg.use_history_mask:
                     loss = model(candidate_news, history, labels, mask)

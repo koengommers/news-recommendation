@@ -1,4 +1,4 @@
-def get_figsize(fraction=1, aspect_ratio=(5**.5 - 1) / 2, textwidth=483.69687):
+def get_figsize(fraction=1, aspect_ratio=(5**0.5 - 1) / 2, textwidth=483.69687):
     # Width of figure (in pts)
     fig_width_pt = textwidth * fraction
 
@@ -13,4 +13,3 @@ def get_figsize(fraction=1, aspect_ratio=(5**.5 - 1) / 2, textwidth=483.69687):
     fig_dim = (fig_width_in, fig_height_in)
 
     return fig_dim
-
