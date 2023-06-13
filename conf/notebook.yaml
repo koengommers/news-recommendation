@@ -1,0 +1,6 @@
+defaults:
+  - _self_
+  - optional local: notebook
+
+data_dir: ../data
+images_dir: ../images
