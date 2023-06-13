@@ -8,14 +8,14 @@ from src.utils.context import context
 
 
 class AdditiveAttentionUserEncoder(nn.Module):
-    @context.fill(num_filters="news_embedding_dim")
+    @context.fill(news_embedding_dim="news_embedding_dim")
     def __init__(
         self,
+        news_embedding_dim: int = 300,
         query_vector_dim: int = 200,
-        num_filters: int = 300,
     ):
         super(AdditiveAttentionUserEncoder, self).__init__()
-        self.additive_attention = AdditiveAttention(query_vector_dim, num_filters)
+        self.additive_attention = AdditiveAttention(query_vector_dim, news_embedding_dim)
 
     def forward(
         self, clicked_news_vector: torch.Tensor, mask: Optional[torch.Tensor] = None

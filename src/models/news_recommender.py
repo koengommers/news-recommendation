@@ -10,7 +10,11 @@ class NewsRecommender(nn.Module):
         self.news_encoder = news_encoder
         self.user_encoder = user_encoder
         self.click_predictor = click_predictor
-        self.loss_modules = nn.ModuleList(loss_modules)
+
+        if isinstance(loss_modules, list):
+            self.loss_modules = nn.ModuleList(loss_modules)
+        else:
+            self.loss_modules = nn.ModuleList([loss_modules])
 
         self.pass_features = (
             hasattr(self.user_encoder, "requires_features")

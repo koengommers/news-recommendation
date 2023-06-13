@@ -1,20 +1,19 @@
-import os
-import sys
-
 import torch
 
-src_path = os.path.abspath(os.path.join("./src"))
-if src_path not in sys.path:
-    sys.path.append(src_path)
-
-from src.models.NRMS import NRMS
-from src.models.NRMS.news_encoder import NewsEncoder
+from src.models.click_predictors.inner_product import InnerProductClickPredictor
+from src.models.loss_modules.prediction import PredictionLoss
+from src.models.news_encoders.nrms import NRMSNewsEncoder
+from src.models.news_recommender import NewsRecommender
+from src.models.user_encoders.nrms import NRMSUserEncoder
 
 
 def init_model(num_words, word_embedding_dim):
-    news_encoder = NewsEncoder(num_words, word_embedding_dim)
-    model = NRMS(news_encoder)
-    return model
+    return NewsRecommender(
+        NRMSNewsEncoder(num_words, word_embedding_dim),
+        NRMSUserEncoder(word_embedding_dim),
+        InnerProductClickPredictor(),
+        PredictionLoss(),
+    )
 
 
 def test_news_encoding():
@@ -25,11 +24,9 @@ def test_news_encoding():
 
     model = init_model(NUM_WORDS, WORD_EMBEDDING_DIM)
 
-    news_article = {
-        "title": torch.randint(0, NUM_WORDS, (BATCH_SIZE, TITLE_LENGTH))
-    }
+    news_article = {"title": torch.randint(0, NUM_WORDS, (BATCH_SIZE, TITLE_LENGTH))}
 
-    news_vector = model.get_news_vector(news_article)
+    news_vector = model.encode_news(news_article)
     assert isinstance(news_vector, torch.Tensor)
     assert news_vector.shape == (BATCH_SIZE, WORD_EMBEDDING_DIM)
 
@@ -44,7 +41,7 @@ def test_user_encoding():
 
     clicked_news_vector = torch.rand((BATCH_SIZE, N_CLICKED_NEWS, WORD_EMBEDDING_DIM))
 
-    user_vector = model.get_user_vector(clicked_news_vector)
+    user_vector = model.encode_user(clicked_news_vector)
     assert isinstance(user_vector, torch.Tensor)
     assert user_vector.shape == (BATCH_SIZE, WORD_EMBEDDING_DIM)
 
@@ -65,7 +62,7 @@ def test_predicting():
         )
     )
 
-    prediction = model.get_prediction(news_vector, user_vector)
+    prediction = model.rank(news_vector, user_vector)
     assert isinstance(prediction, torch.Tensor)
     assert prediction.shape == (BATCH_SIZE, N_CANDIDATE_NEWS)
 
@@ -86,9 +83,7 @@ def test_forward_pass():
         )
     }
     clicked_news = {
-        "title": torch.randint(
-            0, NUM_WORDS, (BATCH_SIZE, N_CLICKED_NEWS, TITLE_LENGTH)
-        )
+        "title": torch.randint(0, NUM_WORDS, (BATCH_SIZE, N_CLICKED_NEWS, TITLE_LENGTH))
     }
     labels = torch.zeros(BATCH_SIZE).long()
     loss = model(candidate_news, clicked_news, labels)

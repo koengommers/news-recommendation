@@ -1,11 +1,6 @@
-import os
-import sys
-
 import hydra
 
-src_path = os.path.abspath(os.path.join("./src"))
-if src_path not in sys.path:
-    sys.path.append(src_path)
+from src.models.news_recommender import NewsRecommender
 
 
 def test_nltk_tokenizer_config():
@@ -22,11 +17,10 @@ def test_bert_tokenizer_config():
         cfg = hydra.compose(
             config_name="train_recommender",
             overrides=[
-                "+tokenizer=bert",
-                "+news_encoder.pretrained_model_name=bert-base-uncased",
+                "+tokenizer=plm",
+                "+model.news_encoder.pretrained_model_name=bert-base-uncased",
             ],
         )
-        print(cfg)
         assert cfg.tokenizer
         assert cfg.tokenizer.pretrained_model_name
         hydra.utils.instantiate(cfg.tokenizer)
@@ -36,24 +30,48 @@ def test_nrms_model_config():
     with hydra.initialize(version_base=None, config_path="../conf"):
         cfg = hydra.compose(
             config_name="train_recommender",
-            overrides=["+model=nrms", "news_encoder.use_pretrained_embeddings=false"],
+            overrides=["+model=nrms", "model.news_encoder.use_pretrained_embeddings=false"],
         )
-        assert cfg.news_encoder
-        assert cfg.model
-        news_encoder = hydra.utils.instantiate(cfg.news_encoder, num_words=1000)
-        hydra.utils.instantiate(cfg.model, news_encoder)
+        assert cfg.model.news_encoder
+        assert cfg.model.user_encoder
+        assert cfg.model.click_predictor
+        assert cfg.model.loss
+
+        news_encoder = hydra.utils.instantiate(cfg.model.news_encoder, num_words=1000)
+        user_encoder = hydra.utils.instantiate(cfg.model.user_encoder)
+        click_predictor = hydra.utils.instantiate(cfg.model.click_predictor)
+        loss_modules = [
+            hydra.utils.instantiate(loss_cfg) for loss_cfg in cfg.model.loss.values()
+        ]
+        model = NewsRecommender(
+            news_encoder, user_encoder, click_predictor, loss_modules
+        )
+
+        assert isinstance(model, NewsRecommender)
 
 
 def test_tanr_model_config():
     with hydra.initialize(version_base=None, config_path="../conf"):
         cfg = hydra.compose(
             config_name="train_recommender",
-            overrides=["+model=tanr", "news_encoder.use_pretrained_embeddings=false"],
+            overrides=["+model=tanr", "model.news_encoder.use_pretrained_embeddings=false"],
         )
-        assert cfg.news_encoder
-        assert cfg.model
-        news_encoder = hydra.utils.instantiate(cfg.news_encoder, num_words=1000)
-        hydra.utils.instantiate(cfg.model, news_encoder, num_categories=15)
+        assert cfg.model.news_encoder
+        assert cfg.model.user_encoder
+        assert cfg.model.click_predictor
+        assert cfg.model.loss
+
+        news_encoder = hydra.utils.instantiate(cfg.model.news_encoder, num_words=1000)
+        user_encoder = hydra.utils.instantiate(cfg.model.user_encoder)
+        click_predictor = hydra.utils.instantiate(cfg.model.click_predictor)
+        loss_modules = [
+            hydra.utils.instantiate(loss_cfg) for loss_cfg in cfg.model.loss.values()
+        ]
+        model = NewsRecommender(
+            news_encoder, user_encoder, click_predictor, loss_modules
+        )
+
+        assert isinstance(model, NewsRecommender)
 
 
 def test_bert_nrms_model_config():
@@ -64,10 +82,22 @@ def test_bert_nrms_model_config():
                 "+model=bert-nrms",
             ],
         )
-        assert cfg.news_encoder
-        assert cfg.model
-        news_encoder = hydra.utils.instantiate(cfg.news_encoder)
-        hydra.utils.instantiate(cfg.model, news_encoder)
+        assert cfg.model.news_encoder
+        assert cfg.model.user_encoder
+        assert cfg.model.click_predictor
+        assert cfg.model.loss
+
+        news_encoder = hydra.utils.instantiate(cfg.model.news_encoder)
+        user_encoder = hydra.utils.instantiate(cfg.model.user_encoder, news_embedding_dim=news_encoder.embedding_dim)
+        click_predictor = hydra.utils.instantiate(cfg.model.click_predictor)
+        loss_modules = [
+            hydra.utils.instantiate(loss_cfg) for loss_cfg in cfg.model.loss.values()
+        ]
+        model = NewsRecommender(
+            news_encoder, user_encoder, click_predictor, loss_modules
+        )
+
+        assert isinstance(model, NewsRecommender)
 
 
 def test_miner_model_config():
@@ -78,7 +108,19 @@ def test_miner_model_config():
                 "+model=miner",
             ],
         )
-        assert cfg.news_encoder
-        assert cfg.model
-        news_encoder = hydra.utils.instantiate(cfg.news_encoder)
-        hydra.utils.instantiate(cfg.model, news_encoder)
+        assert cfg.model.news_encoder
+        assert cfg.model.user_encoder
+        assert cfg.model.click_predictor
+        assert cfg.model.loss
+
+        news_encoder = hydra.utils.instantiate(cfg.model.news_encoder)
+        user_encoder = hydra.utils.instantiate(cfg.model.user_encoder)
+        click_predictor = hydra.utils.instantiate(cfg.model.click_predictor)
+        loss_modules = [
+            hydra.utils.instantiate(loss_cfg) for loss_cfg in cfg.model.loss.values()
+        ]
+        model = NewsRecommender(
+            news_encoder, user_encoder, click_predictor, loss_modules
+        )
+
+        assert isinstance(model, NewsRecommender)

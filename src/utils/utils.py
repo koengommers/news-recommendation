@@ -5,7 +5,7 @@ import torch.nn.functional as F
 def object_to_device(object, device):
     if isinstance(object, dict):
         for key in object:
-            object[key] = object[key].to(device)
+            object[key] = object_to_device(object[key], device)
     else:
         object = object.to(device)
 

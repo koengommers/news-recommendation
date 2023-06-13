@@ -6,7 +6,6 @@ defaults:
   - /model/loss:
     - prediction
     - interest_disagreement
-  - /lr_scheduler: linear_decay_with_warmup
 
 model:
   news_encoder:
