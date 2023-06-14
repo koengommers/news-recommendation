@@ -4,3 +4,4 @@ defaults:
 
 data_dir: ../data
 images_dir: ../images
+tables_dir: ../tables
