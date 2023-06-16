@@ -18,7 +18,9 @@ def get_figsize(fraction=1, aspect_ratio=(5**0.5 - 1) / 2, textwidth=483.69687):
     return fig_dim
 
 
-def save_to_latex(tables_dir, key, styler, caption, format_column_header=None, **kwargs):
+def save_to_latex(
+    tables_dir, key, styler, caption, format_column_header=None, **kwargs
+):
     if format_column_header is None:
         format_column_header = lambda s: r"\textbf{" + s + "}"
 
