@@ -1,5 +1,7 @@
 import os
 
+import matplotlib.pyplot as plt
+
 
 def get_figsize(fraction=1, aspect_ratio=(5**0.5 - 1) / 2, textwidth=483.69687):
     # Width of figure (in pts)
@@ -45,3 +47,20 @@ def save_to_latex(
 
     with open(os.path.join(tables_dir, f"{key}.tex"), "w") as file:
         file.write(latex)
+
+
+class PlotParamsManager:
+    def __init__(self, params):
+        self.params = params
+        self.previous_params = plt.rcParams.copy()
+
+    def __enter__(self):
+        plt.rcParams.update(self.params)
+
+    def __exit__(self, type, value, traceback):
+        plt.show()
+        plt.rcParams.update(self.previous_params)
+
+
+def plot_latex_style():
+    return PlotParamsManager({"text.usetex": True, "font.family": "serif"})
