@@ -39,9 +39,9 @@ It is possible to combine model components to create a custom model. A new entry
 
     poetry run python src/train_recommender.py +model=nrms model/user_encoder=additive_attention
 
-There are some pre-made presets for Hierarchical User Interest Modeling (from HieRec) and Multi-Interest User Modeling (from MINER). Example for using NRMS with Multi User-interest:
+There are some override presets for Hierarchical User Interest Modeling (from HieRec) and Multi-Interest User Modeling (from MINER). Example for using NRMS with Multi User-interest:
 
-    poetry run python src/train_recommender.py +model=nrms +options=multi_interest
+    poetry run python src/train_recommender.py +model=nrms +model_overrides=multi_interest
 
 Note: you are responsible for ensuring the necessary features for each component are selected.
 
