@@ -6,6 +6,10 @@ Many news recommendation models follow the same general architecture with simila
 
 This repository relies heavily on [Hydra](https://hydra.cc/) for configuration, so it is recommended to familiarize yourself with it.
 
+## Experiments
+
+The setup/configuration for the experiments in my thesis can be found in the `conf/experiments` directory. The results are shown in the notebooks in the `notebooks` directory.
+
 ## Available models
 
 | Name   | Paper                                                                                                               | Notes                               |
