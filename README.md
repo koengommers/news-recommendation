@@ -27,7 +27,7 @@ After cloning, install dependencies using [Poetry](https://python-poetry.org/):
 
     poetry install
 
-By default, a sampled subset of the MIND-large dataset is used. This is because the original dataset does not contain test labels. Either you need to use the MIND-large dataset and disable evaluation on test split (through adding `data=mind_large eval_splits=[dev]` to your command) or you can sample the data through:
+By default, a sampled subset of the MIND-large dataset is used. This is because the original dataset does not contain test labels. Either you need to use the MIND-large dataset and disable evaluation on test split (through adding `data=mind_large eval_splits=[dev]` to your commands) or you can sample the data through:
 
     poetry run python src/sample_data.py
 
@@ -35,7 +35,7 @@ Training a model (e.g. NRMS):
 
     poetry run python src/train_recommender.py +model=nrms
 
-Output can be found in the `outputs/` directory
+After training, files containing checkpoints and metrics can be found in the `outputs/` directory.
 
 ## Custom model configurations
 
@@ -47,7 +47,7 @@ There are some override presets for Hierarchical User Interest Modeling (from Hi
 
     poetry run python src/train_recommender.py +model=nrms +model_overrides=multi_interest
 
-Note: you are responsible for ensuring the necessary features for each component are selected.
+Note: when mixing components, you are responsible for ensuring the necessary features for each component are selected. This can be done either through setting the `features` field in config. Or through CLI arguments, by for example adding `features="[title, abstract, category, subcategory]"` to your commands.
 
 ## Acknowledgements
 
